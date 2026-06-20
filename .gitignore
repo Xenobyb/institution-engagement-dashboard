@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Excel temporary files
+~$*.xlsx
+
+# Logs
+*.log
+
+# VS Code
+.vscode/
+
+# Python
+__pycache__/
+
+# Environment variables
+.env
