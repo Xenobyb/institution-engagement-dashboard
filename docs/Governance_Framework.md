@@ -19,7 +19,7 @@ GitHub Repository
 
 ### Business Owner
 
-TalentCorp CoE GET
+TalentCorp COE GET
 
 Responsibilities:
 
