@@ -48,7 +48,7 @@ Validate:
 
 ### Step 5
 
-Export:
+Export latest Institutions_Master_SSOT.xlxs to institutions_master.csv
 
 /data/institutions_master.csv
 
