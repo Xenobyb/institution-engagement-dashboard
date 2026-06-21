@@ -42,6 +42,7 @@ Responsibilities:
 
 ## Data Source Hierarchy
 
+```text
 Raw Files
 ↓
 Master Region
@@ -49,6 +50,7 @@ Master Region
 Institutions Master (SSOT)
 ↓
 Dashboard
+```
 
 ---
 
