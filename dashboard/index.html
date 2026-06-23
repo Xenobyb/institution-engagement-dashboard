@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Institution Engagement Dashboard</title>
+</head>
+<body>
+    <div id="app-layout">
+        <aside id="sidebar">
+            <div class="sidebar-brand">
+
+                <div class="brand-text">
+                    <h1>Institution Engagement<br>Dashboard</h1>
+
+                    <p class="brand-subtitle">Centre of Excellence (COE)</p>
+                    <p class="brand-subtitle">Graduate & Emerging Talent</p>
+                </div>
+            </div>
+
+            <nav id="sidebar-navigation" aria-label="Dashboard navigation">
+                <ul>
+                    <li>
+                        <a class="active" href="#dashboard-header" aria-label="Overview" aria-current="page">
+                            <img src="../assets/icons/overview.svg" alt="" class="nav-icon">
+                            <span class="nav-label">Overview</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="#charts-section" aria-label="Insights">
+                            <img src="../assets/icons/insights.svg" alt="" class="nav-icon">
+                            <span class="nav-label">Insights</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="#directory-section" aria-label="Institutions Directory">
+                            <img src="../assets/icons/directory.svg" alt="" class="nav-icon">
+                            <span class="nav-label">Institutions Directory</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="#data-dictionary" aria-label="Data Dictionary">
+                            <img src="../assets/icons/dictionary.svg" alt="" class="nav-icon">
+                            <span class="nav-label">Data Dictionary</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="#update-guide" aria-label="Update Guide">
+                            <img src="../assets/icons/update.svg" alt="" class="nav-icon">
+                            <span class="nav-label">Update Guide</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="#governance-framework" aria-label="Governance Framework">
+                            <img src="../assets/icons/governance.svg" alt="" class="nav-icon">
+                            <span class="nav-label">Governance Framework</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="#about" aria-label="About">
+                            <img src="../assets/icons/about.svg" alt="" class="nav-icon">
+                            <span class="nav-label">About</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <section id="sidebar-metadata" aria-label="Dashboard metadata">
+                <div class="meta-row">
+                    <div class="meta-label">Last Updated</div>
+                    <div class="meta-value"><span id="last-updated">--</span></div>
+                </div>
+
+                <div class="meta-row">
+                    <div class="meta-label">Status</div>
+                    <div class="meta-value"><span class="status-dot live" aria-hidden="true"></span> Live</div>
+                </div>
+
+                <div class="meta-sep" aria-hidden="true"></div>
+
+                <div class="meta-row">
+                    <div class="meta-label">Data Source</div>
+                    <div class="meta-value"><span id="data-source">--</span></div>
+                </div>
+            </section>
+        </aside>
+
+        <main id="dashboard-content">
+            <header id="dashboard-header">
+                <div class="header-content">
+                    <div class="header-title-group">
+                        <h1>Overview</h1>
+                        <p>Monitor institutional engagement coverage across Malaysia</p>
+                    </div>
+
+                    <div class="header-filters" aria-label="Dashboard filters">
+                        <form id="dashboard-filters">
+                            <div class="filter-field">
+                                <label for="year-filter">Year</label>
+                                <select id="year-filter" name="year" aria-label="Filter by year">
+                                    <option value="">All Years</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-field">
+                                <label for="category-filter">Category</label>
+                                <select id="category-filter" name="category" aria-label="Filter by category">
+                                    <option value="">All Categories</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-field">
+                                <label for="region-filter">Region</label>
+                                <select id="region-filter" name="region" aria-label="Filter by region">
+                                    <option value="">All Regions</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-field">
+                                <label for="state-filter">State</label>
+                                <select id="state-filter" name="state" aria-label="Filter by state">
+                                    <option value="">All States</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-field filter-action">
+                                <label for="reset-filters">Reset</label>
+                                <button id="reset-filters" type="reset" aria-label="Reset dashboard filters"></button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </header>
+
+            <section id="kpi-section" aria-label="Key performance indicators">
+                <div class="kpi-card">
+                    <h3 class="kpi-title">Total Institutions</h3>
+                    <span class="kpi-value" id="total-institutions" data-field="total-institutions">--</span>
+                    <p>Total number of institutions in the dataset.</p>
+                </div>
+
+                <div class="kpi-card">
+                    <h3 class="kpi-title">Total Engaged</h3>
+                    <span class="kpi-value" id="total-engaged" data-field="total-engaged">--</span>
+                    <p>Total number of institutions with engagement recorded.</p>
+                </div>
+
+                <div class="kpi-card">
+                    <h3 class="kpi-title">Engagement Rate</h3>
+                    <span class="kpi-value" id="engagement-rate" data-field="engagement-rate">--</span>
+                    <p>Percentage of institutions with engagement recorded.</p>
+                </div>
+
+                <div class="kpi-card">
+                    <h3 class="kpi-title">Non-Engaged Institutions</h3>
+                    <span class="kpi-value" id="non-engaged-institutions" data-field="non-engaged-institutions">--</span>
+                    <p>Total number of institutions without engagement recorded.</p>
+                </div>
+
+                <div class="kpi-card">
+                    <h3 class="kpi-title">Recently Engaged</h3>
+                    <span class="kpi-value" id="recently-engaged" data-field="recently-engaged">--</span>
+                    <p>Total number of institutions engaged in the latest reporting year.</p>
+                </div>
+            </section>
+
+            <section id="heatmap-section">
+                <div class="section-header">
+                    <h2>Engagement Coverage by State</h2>
+                </div>
+
+                <div id="heatmap-container">
+                    <div id="malaysia-heatmap">
+                        Heatmap Placeholder
+                    </div>
+                </div>
+            </section>
+
+            <section id="charts-section" aria-label="Dashboard charts">
+                <section id="institutions-by-region">
+                    <div class="chart-header">
+                        <h3>Institutions by Region</h3>
+                    </div>
+
+                    <div id="institutions-by-region-chart" class="chart-container">
+                        Chart Placeholder
+                    </div>
+                </section>
+
+                <section id="institutions-by-category">
+                    <div class="chart-header">
+                        <h3>Institutions by Category</h3>
+                    </div>
+
+                    <div id="institutions-by-category-chart" class="chart-container">
+                        Chart Placeholder
+                    </div>
+                </section>
+
+                <section id="engagement-trend">
+                    <div class="chart-header">
+                        <h3>Engagement Trend</h3>
+                    </div>
+
+                    <div id="engagement-trend-chart" class="chart-container">
+                        Chart Placeholder
+                    </div>
+                </section>
+
+                <section id="coverage-by-region">
+                    <div class="chart-header">
+                        <h3>Coverage by Region</h3>
+                    </div>
+
+                    <div id="coverage-by-region-chart" class="chart-container">
+                        Chart Placeholder
+                    </div>
+                </section>
+
+                <section id="institutions-by-state">
+                    <div class="chart-header">
+                        <h3>Institutions by State</h3>
+                    </div>
+
+                    <div id="institutions-by-state-chart" class="chart-container">
+                        Chart Placeholder
+                    </div>
+                </section>
+            </section>
+
+            <section id="directory-section">
+                <div class="directory-header">
+                    <h2>Institutions Directory</h2>
+                    <label for="institution-search">Search Institutions</label>
+                    <input
+                        type="search"
+                        id="institution-search"
+                        name="institution-search"
+                        aria-label="Search institutions"
+                    >
+                </div>
+
+                <div class="table-container">
+                    <table id="institution-directory-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Institution</th>
+                                <th scope="col">Category</th>
+                                <th scope="col">Region</th>
+                                <th scope="col">State</th>
+                                <th scope="col">Ever Engaged</th>
+                                <th scope="col">Latest Engagement Year</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Institution Placeholder</td>
+                                <td>Category Placeholder</td>
+                                <td>Region Placeholder</td>
+                                <td>State Placeholder</td>
+                                <td>Engagement Placeholder</td>
+                                <td>Year Placeholder</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="data-dictionary" aria-label="Data dictionary"></section>
+            <section id="update-guide" aria-label="Update guide"></section>
+            <section id="governance-framework" aria-label="Governance framework"></section>
+            <section id="about" aria-label="About this dashboard"></section>
+        </main>
+
+        <footer id="dashboard-footer">
+            <p>Institution Engagement Dashboard</p>
+            <p>Version 1.0</p>
+        </footer>
+    </div>
+</body>
+</html>
