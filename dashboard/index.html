@@ -187,79 +187,139 @@
             </section>
 
             <section id="heatmap-section">
-                <div class="section-header">
-                    <h2>Engagement Coverage by State</h2>
+                <div class="section-header heatmap-header">
+                    <h2>Engagement Coverage by State (Heatmap)</h2>
+                    <p class="heatmap-subtitle">Coverage Based on Latest Engagement Year</p>
                 </div>
 
                 <div id="heatmap-container">
-                    <div id="malaysia-heatmap">
-                        Heatmap Placeholder
+                    <div class="heatmap-layout">
+                        <aside class="heatmap-sidebar" aria-label="Heatmap legend and scoring method">
+                            <div class="heatmap-legend-card">
+                                <div class="heatmap-legend-title">Legend</div>
+                                <div class="heatmap-legend-bar"></div>
+                                <div class="heatmap-legend-labels">
+                                    <span>0%</span>
+                                    <span>25%</span>
+                                    <span>50%</span>
+                                    <span>75%</span>
+                                    <span>100%</span>
+                                </div>
+                            </div>
+
+                            <div class="heatmap-scoring-card">
+                                <div class="heatmap-scoring-title">Scoring Method (Latest Engagement Year)</div>
+                                <ul class="heatmap-scoring-list">
+                                    <li>2026 = 100%</li>
+                                    <li>2025 = 70%</li>
+                                    <li>2024 = 40%</li>
+                                    <li>Never = 0%</li>
+                                </ul>
+                            </div>
+                        </aside>
+
+                        <div class="heatmap-map-container">
+                            <div id="malaysia-heatmap">
+                                <div class="heatmap-placeholder-copy">
+                                    <span>Malaysia Heatmap Placeholder</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
             <section id="charts-section" aria-label="Dashboard charts">
-                <section id="institutions-by-region">
+                <section id="institutions-by-region" class="chart-card">
                     <div class="chart-header">
-                        <h3>Institutions by Region</h3>
+                        <h3 class="chart-title">Institutions by Region</h3>
                     </div>
 
-                    <div id="institutions-by-region-chart" class="chart-container">
-                        Chart Placeholder
+                    <div class="chart-container">
+                        <canvas id="chart-region"></canvas>
+                        <div class="chart-placeholder-copy">
+                            <span>Chart Placeholder</span>
+                            <span>Future Chart.js Rendering Area</span>
+                        </div>
                     </div>
                 </section>
 
-                <section id="institutions-by-category">
+                <section id="institutions-by-category" class="chart-card">
                     <div class="chart-header">
-                        <h3>Institutions by Category</h3>
+                        <h3 class="chart-title">Institutions by Category</h3>
                     </div>
 
-                    <div id="institutions-by-category-chart" class="chart-container">
-                        Chart Placeholder
+                    <div class="chart-container">
+                        <canvas id="chart-category"></canvas>
+                        <div class="chart-placeholder-copy">
+                            <span>Chart Placeholder</span>
+                            <span>Future Chart.js Rendering Area</span>
+                        </div>
                     </div>
                 </section>
 
-                <section id="engagement-trend">
+                <section id="engagement-trend" class="chart-card">
                     <div class="chart-header">
-                        <h3>Engagement Trend</h3>
+                        <h3 class="chart-title">Engagement Trend</h3>
                     </div>
 
-                    <div id="engagement-trend-chart" class="chart-container">
-                        Chart Placeholder
+                    <div class="chart-container">
+                        <canvas id="chart-trend"></canvas>
+                        <div class="chart-placeholder-copy">
+                            <span>Chart Placeholder</span>
+                            <span>Future Chart.js Rendering Area</span>
+                        </div>
                     </div>
                 </section>
 
-                <section id="coverage-by-region">
+                <section id="coverage-by-region" class="chart-card">
                     <div class="chart-header">
-                        <h3>Coverage by Region</h3>
+                        <h3 class="chart-title">Coverage by Region</h3>
                     </div>
 
-                    <div id="coverage-by-region-chart" class="chart-container">
-                        Chart Placeholder
+                    <div class="chart-container">
+                        <canvas id="chart-coverage"></canvas>
+                        <div class="chart-placeholder-copy">
+                            <span>Chart Placeholder</span>
+                            <span>Future Chart.js Rendering Area</span>
+                        </div>
                     </div>
                 </section>
 
-                <section id="institutions-by-state">
+                <section id="institutions-by-state" class="chart-card">
                     <div class="chart-header">
-                        <h3>Institutions by State</h3>
+                        <h3 class="chart-title">Institutions by State</h3>
                     </div>
 
-                    <div id="institutions-by-state-chart" class="chart-container">
-                        Chart Placeholder
+                    <div class="chart-container">
+                        <canvas id="chart-state"></canvas>
+                        <div class="chart-placeholder-copy">
+                            <span>Chart Placeholder</span>
+                            <span>Future Chart.js Rendering Area</span>
+                        </div>
                     </div>
                 </section>
             </section>
 
             <section id="directory-section">
                 <div class="directory-header">
-                    <h2>Institutions Directory</h2>
-                    <label for="institution-search">Search Institutions</label>
-                    <input
-                        type="search"
-                        id="institution-search"
-                        name="institution-search"
-                        aria-label="Search institutions"
-                    >
+                    <div class="directory-title">
+                        <h2>Institutions Directory</h2>
+                    </div>
+
+                    <div class="directory-search">
+                        <label for="institution-search">Search Institutions</label>
+                        <div class="directory-search-field">
+                            <img src="../assets/icons/search.svg" alt="" class="directory-search-icon">
+                            <input
+                                type="search"
+                                id="institution-search"
+                                name="institution-search"
+                                aria-label="Search institutions"
+                                placeholder="Search institutions"
+                            >
+                        </div>
+                    </div>
                 </div>
 
                 <div class="table-container">
@@ -274,7 +334,7 @@
                                 <th scope="col">Latest Engagement Year</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="directory-table-body">
                             <tr>
                                 <td>Institution Placeholder</td>
                                 <td>Category Placeholder</td>
@@ -286,6 +346,14 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div id="directory-pagination" aria-label="Directory pagination">
+                    <span id="directory-count">1&ndash;10 of 539</span>
+                    <div class="directory-pagination-controls">
+                        <button class="pagination-button" type="button" aria-label="Previous page" disabled>&lsaquo;</button>
+                        <button class="pagination-button" type="button" aria-label="Next page" disabled>&rsaquo;</button>
+                    </div>
+                </div>
             </section>
 
             <section id="data-dictionary" aria-label="Data dictionary"></section>
@@ -296,8 +364,10 @@
 
         <footer id="dashboard-footer">
             <p>Institution Engagement Dashboard</p>
-            <p>Version 1.0</p>
+            <p>Version <span id="dashboard-version">1.0</span></p>
         </footer>
     </div>
+    <script src="config.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
