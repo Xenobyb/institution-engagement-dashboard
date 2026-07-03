@@ -213,30 +213,46 @@ select:focus-visible {
 
 #sidebar-metadata {
     display: grid;
-    gap: 8px;
+    gap: 14px;
     margin-top: auto;
-    padding: 20px;
+    padding: 24px;
     color: #94a3b8;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
+    box-shadow: var(--shadow-card);
+    font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    overflow: hidden;
 }
 
 .meta-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
+    min-width: 0;
 }
 
 .meta-label {
     color: #94a3b8;
     font-size: 0.82rem;
+    line-height: 1.4;
+    white-space: nowrap;
 }
 
 .meta-value {
     color: #ffffff;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    text-align: right;
+    min-width: 0;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
 }
 
 .status-dot {

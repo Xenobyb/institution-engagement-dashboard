@@ -1,15 +1,30 @@
 var dashboardState = {
     rawData: [],
     filteredData: [],
+    searchedData: [],
+    visibleData: [],
     filters: {
-        year: "All",
-        category: "All",
-        region: "All",
-        state: "All"
+        year: CONFIG.DEFAULT_FILTER_VALUE,
+        category: CONFIG.DEFAULT_FILTER_VALUE,
+        region: CONFIG.DEFAULT_FILTER_VALUE,
+        state: CONFIG.DEFAULT_FILTER_VALUE
+    },
+    searchQuery: "",
+    pagination: {
+        currentPage: 1,
+        pageSize: CONFIG.PAGE_SIZE,
+        totalPages: 1
+    },
+    metadata: {
+        lastUpdated: null,
+        dataSource: CONFIG.DATA_SOURCE,
+        version: CONFIG.VERSION
     }
 };
 
 var DOM = {};
+var searchEventsAttached = false;
+var resetEventsAttached = false;
 
 function cacheDomElements() {
     DOM = {
@@ -23,9 +38,11 @@ function cacheDomElements() {
         categoryFilter: document.getElementById("category-filter"),
         regionFilter: document.getElementById("region-filter"),
         stateFilter: document.getElementById("state-filter"),
+        institutionSearch: document.getElementById("institution-search"),
         lastUpdated: document.getElementById("last-updated"),
         dataSource: document.getElementById("data-source"),
-        dashboardVersion: document.getElementById("dashboard-version")
+        dashboardVersion: document.getElementById("dashboard-version"),
+        resetButton: document.getElementById("reset-filters")
     };
 }
 
@@ -132,24 +149,305 @@ function parseCsv(csvText) {
 function initializeDashboard() {
     cacheDomElements();
     populateVersion();
+    attachFilterEvents();
+    attachSearchEvents();
+    attachResetEvents();
 
     loadCsvData()
         .then(function (data) {
-            dashboardState.rawData = data;
-            dashboardState.filteredData = data.slice();
-
-            populateKpi();
-            populateDirectory();
-            populateFilters();
-            populateMetadata();
+            var validatedData = validateData(data);
+            initializeState(validatedData);
+            renderDashboard();
         })
         .catch(function (error) {
             console.error("[Dashboard] CSV loading failed. Existing placeholders remain visible.", error);
         });
 }
 
+function validateData(data) {
+    var records = Array.isArray(data) ? data : [];
+    var requiredColumns = CONFIG.REQUIRED_COLUMNS || [];
+    var fieldNames = CONFIG.FIELD_NAMES || {};
+    var missingColumns = [];
+    var firstRecord = records[0] || {};
+
+    requiredColumns.forEach(function (columnName) {
+        if (!Object.prototype.hasOwnProperty.call(firstRecord, columnName)) {
+            missingColumns.push(columnName);
+        }
+    });
+
+    if (missingColumns.length) {
+        console.warn("[Dashboard] Missing required CSV columns:", missingColumns.join(", "));
+    }
+
+    records.forEach(function (record, recordIndex) {
+        var rowNumber = recordIndex + 2;
+
+        requiredColumns.forEach(function (columnName) {
+            if (!Object.prototype.hasOwnProperty.call(record, columnName)) {
+                return;
+            }
+
+            if (!String(record[columnName] || "").trim()) {
+                console.warn("[Dashboard] Missing required field value in row " + rowNumber + ": " + columnName);
+            }
+        });
+
+        warnIfEmptyField(record, rowNumber, fieldNames.INSTITUTION, "Empty Institution name");
+        warnIfEmptyField(record, rowNumber, fieldNames.CATEGORY, "Empty Category");
+        warnIfEmptyField(record, rowNumber, fieldNames.REGION, "Empty Region");
+        warnIfEmptyField(record, rowNumber, fieldNames.STATE, "Empty State");
+        warnIfEmptyField(record, rowNumber, fieldNames.LATEST_ENGAGEMENT_YEAR, "Missing Latest Engagement Year");
+        validateEverEngagedValue(record, rowNumber, fieldNames.EVER_ENGAGED);
+        validateLatestEngagementYear(record, rowNumber, fieldNames.LATEST_ENGAGEMENT_YEAR);
+    });
+
+    return data;
+}
+
+function warnIfEmptyField(record, rowNumber, fieldName, message) {
+    if (!fieldName || !Object.prototype.hasOwnProperty.call(record, fieldName)) {
+        return;
+    }
+
+    if (!String(record[fieldName] || "").trim()) {
+        console.warn("[Dashboard] " + message + " in row " + rowNumber);
+    }
+}
+
+function validateEverEngagedValue(record, rowNumber, fieldName) {
+    if (!fieldName || !Object.prototype.hasOwnProperty.call(record, fieldName)) {
+        return;
+    }
+
+    var value = String(record[fieldName] || "").trim();
+
+    if (!value) {
+        return;
+    }
+
+    if (CONFIG.VALID_BOOLEAN_VALUES.indexOf(value) === -1) {
+        console.warn("[Dashboard] Unexpected EverEngaged value in row " + rowNumber + ": " + value);
+    }
+}
+
+function validateLatestEngagementYear(record, rowNumber, fieldName) {
+    if (!fieldName || !Object.prototype.hasOwnProperty.call(record, fieldName)) {
+        return;
+    }
+
+    var value = String(record[fieldName] || "").trim();
+    var numericYear = Number(value);
+
+    if (!value) {
+        return;
+    }
+
+    if (value === CONFIG.NO_ENGAGEMENT_YEAR_VALUE) {
+        return;
+    }
+
+    if (!Number.isInteger(numericYear) || numericYear < 0) {
+        console.warn("[Dashboard] Invalid or unexpected engagement year value in row " + rowNumber + ": " + value);
+    }
+}
+
+function initializeState(data) {
+    dashboardState.rawData = data;
+    dashboardState.metadata.lastUpdated = new Date();
+    resetDashboardState();
+}
+
+function resetDashboardState() {
+    dashboardState.filters = {
+        year: CONFIG.DEFAULT_FILTER_VALUE,
+        category: CONFIG.DEFAULT_FILTER_VALUE,
+        region: CONFIG.DEFAULT_FILTER_VALUE,
+        state: CONFIG.DEFAULT_FILTER_VALUE
+    };
+    dashboardState.searchQuery = "";
+    dashboardState.pagination.currentPage = 1;
+
+    applyFilters();
+    applySearch();
+    applyPagination();
+    updateVisibleData();
+}
+
+function calculateTotalPages(recordCount, pageSize) {
+    if (!recordCount) {
+        return 1;
+    }
+
+    return Math.ceil(recordCount / pageSize);
+}
+
+function renderDashboard() {
+    populateKpi();
+    populateDirectory();
+    populateFilters();
+    populateMetadata();
+
+    // Future Sprint
+    // renderCharts();
+    // renderHeatmap();
+}
+
+function attachFilterEvents() {
+    var filterControls = [
+        { element: DOM.yearFilter, name: "year" },
+        { element: DOM.categoryFilter, name: "category" },
+        { element: DOM.regionFilter, name: "region" },
+        { element: DOM.stateFilter, name: "state" }
+    ];
+
+    filterControls.forEach(function (filterControl) {
+        if (!filterControl.element) {
+            return;
+        }
+
+        filterControl.element.addEventListener("change", function (event) {
+            updateFilterState(filterControl.name, event.target.value);
+            runDashboardPipeline();
+            renderDashboard();
+        });
+    });
+}
+
+function attachSearchEvents() {
+    if (!DOM.institutionSearch || searchEventsAttached) {
+        return;
+    }
+
+    DOM.institutionSearch.addEventListener("input", function (event) {
+        updateSearchState(event.target.value);
+        runDashboardPipeline();
+        renderDashboard();
+    });
+
+    searchEventsAttached = true;
+}
+
+function attachResetEvents() {
+    if (!DOM.resetButton || resetEventsAttached) {
+        return;
+    }
+
+    DOM.resetButton.addEventListener("click", function (event) {
+        event.preventDefault();
+        handleReset();
+    });
+
+    resetEventsAttached = true;
+}
+
+function handleReset() {
+    resetDashboardState();
+    clearSearchInput();
+    renderDashboard();
+}
+
+function clearSearchInput() {
+    if (!DOM.institutionSearch) {
+        return;
+    }
+
+    DOM.institutionSearch.value = "";
+}
+
+function runDashboardPipeline() {
+    applyFilters();
+    applySearch();
+    applyPagination();
+    updateVisibleData();
+}
+
+function updateFilterState(filterName, value) {
+    dashboardState.filters[filterName] = value;
+    console.log("[Dashboard] Filter updated");
+}
+
+function updateSearchState(query) {
+    dashboardState.searchQuery = String(query || "");
+}
+
+function applyFilters() {
+    var filters = dashboardState.filters;
+    var filterFields = {
+        year: "LatestEngagementYear",
+        category: "Category",
+        region: "Region",
+        state: "State"
+    };
+
+    console.log("[Dashboard] Applying filters");
+
+    dashboardState.filteredData = dashboardState.rawData.filter(function (record) {
+        return Object.keys(filterFields).every(function (filterName) {
+            var filterValue = filters[filterName];
+
+            if (filterValue === CONFIG.DEFAULT_FILTER_VALUE) {
+                return true;
+            }
+
+            return String(record[filterFields[filterName]] || "").trim() === filterValue;
+        });
+    });
+
+    console.log("[Dashboard] Filtered records: " + dashboardState.filteredData.length);
+}
+
+function updateVisibleData() {
+    dashboardState.visibleData = dashboardState.searchedData;
+}
+
+function applySearch() {
+    var query = String(dashboardState.searchQuery || "").trim().toLowerCase();
+    var searchFields = [
+        "Institution",
+        "Category",
+        "Region",
+        "State"
+    ];
+
+    if (!query) {
+        dashboardState.searchedData = dashboardState.filteredData.slice();
+        return;
+    }
+
+    dashboardState.searchedData = dashboardState.filteredData.filter(function (record) {
+        return searchFields.some(function (field) {
+            return String(record[field] || "").toLowerCase().indexOf(query) !== -1;
+        });
+    });
+}
+
+function applyPagination() {
+    var recordCount = Array.isArray(dashboardState.searchedData) ? dashboardState.searchedData.length : 0;
+    var pageSize = dashboardState.pagination.pageSize || CONFIG.PAGE_SIZE;
+    var totalPages = calculateTotalPages(recordCount, pageSize);
+    var currentPage = dashboardState.pagination.currentPage || 1;
+
+    if (currentPage < 1) {
+        currentPage = 1;
+    }
+
+    if (currentPage > totalPages) {
+        currentPage = totalPages;
+    }
+
+    dashboardState.pagination.currentPage = currentPage;
+    dashboardState.pagination.pageSize = pageSize;
+    dashboardState.pagination.totalPages = totalPages;
+}
+
+function renderCharts() {}
+
+function renderHeatmap() {}
+
 function populateKpi() {
-    var data = dashboardState.filteredData;
+    var data = dashboardState.searchedData;
     var total = data.length;
     var engaged = data.filter(function (record) {
         return isTrue(record.EverEngaged);
@@ -191,7 +489,7 @@ function populateDirectory() {
 
     var fragment = document.createDocumentFragment();
 
-    dashboardState.filteredData.forEach(function (record) {
+    dashboardState.visibleData.forEach(function (record) {
         fragment.appendChild(createTableRow(record));
     });
 
@@ -202,10 +500,10 @@ function populateDirectory() {
 }
 
 function populateFilters() {
-    setFilterOptions(DOM.yearFilter, getUniqueValues(dashboardState.rawData, "LatestEngagementYear").sort(sortYearValues));
-    setFilterOptions(DOM.categoryFilter, getUniqueValues(dashboardState.rawData, "Category").sort(sortTextValues));
-    setFilterOptions(DOM.regionFilter, getUniqueValues(dashboardState.rawData, "Region").sort(sortTextValues));
-    setFilterOptions(DOM.stateFilter, getUniqueValues(dashboardState.rawData, "State").sort(sortTextValues));
+    setFilterOptions(DOM.yearFilter, getUniqueValues(dashboardState.rawData, "LatestEngagementYear").sort(sortYearValues), dashboardState.filters.year);
+    setFilterOptions(DOM.categoryFilter, getUniqueValues(dashboardState.rawData, "Category").sort(sortTextValues), dashboardState.filters.category);
+    setFilterOptions(DOM.regionFilter, getUniqueValues(dashboardState.rawData, "Region").sort(sortTextValues), dashboardState.filters.region);
+    setFilterOptions(DOM.stateFilter, getUniqueValues(dashboardState.rawData, "State").sort(sortTextValues), dashboardState.filters.state);
 
     console.log("[Dashboard] Filters initialized");
 }
@@ -231,13 +529,13 @@ function createTableRow(record) {
     return row;
 }
 
-function setFilterOptions(selectElement, values) {
+function setFilterOptions(selectElement, values, selectedValue) {
     if (!selectElement) {
         return;
     }
 
     var fragment = document.createDocumentFragment();
-    fragment.appendChild(createOption(CONFIG.DEFAULT_YEAR, CONFIG.DEFAULT_YEAR));
+    fragment.appendChild(createOption(CONFIG.DEFAULT_FILTER_VALUE, CONFIG.DEFAULT_FILTER_VALUE));
 
     values.forEach(function (value) {
         fragment.appendChild(createOption(value, value));
@@ -245,7 +543,7 @@ function setFilterOptions(selectElement, values) {
 
     selectElement.textContent = "";
     selectElement.appendChild(fragment);
-    selectElement.value = CONFIG.DEFAULT_YEAR;
+    selectElement.value = values.indexOf(selectedValue) === -1 ? CONFIG.DEFAULT_FILTER_VALUE : selectedValue;
 }
 
 function createOption(value, label) {
@@ -310,13 +608,22 @@ function formatBoolean(value) {
 
 function populateVersion() {
     if (DOM.dashboardVersion) {
-        DOM.dashboardVersion.textContent = CONFIG.VERSION;
+        DOM.dashboardVersion.textContent = dashboardState.metadata.version;
     }
+}
+
+function getDisplayFilename(path) {
+    return String(path)
+        .split("/")
+        .pop()
+        .trim();
 }
 
 function populateMetadata() {
     if (DOM.lastUpdated) {
-        DOM.lastUpdated.textContent = new Date().toLocaleDateString("en-MY", {
+        var lastUpdated = dashboardState.metadata.lastUpdated || new Date();
+
+        DOM.lastUpdated.textContent = lastUpdated.toLocaleDateString("en-MY", {
             year: "numeric",
             month: "short",
             day: "numeric"
@@ -324,7 +631,7 @@ function populateMetadata() {
     }
 
     if (DOM.dataSource) {
-        DOM.dataSource.textContent = CONFIG.DATA_SOURCE;
+        DOM.dataSource.textContent = getDisplayFilename(dashboardState.metadata.dataSource);
     }
 }
 
