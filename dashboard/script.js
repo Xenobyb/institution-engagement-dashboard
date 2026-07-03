@@ -25,6 +25,7 @@ var dashboardState = {
 var DOM = {};
 var searchEventsAttached = false;
 var resetEventsAttached = false;
+var paginationEventsAttached = false;
 
 function cacheDomElements() {
     DOM = {
@@ -41,6 +42,9 @@ function cacheDomElements() {
         institutionSearch: document.getElementById("institution-search"),
         lastUpdated: document.getElementById("last-updated"),
         dataSource: document.getElementById("data-source"),
+        directoryCount: document.getElementById("directory-count"),
+        prevPageButton: document.querySelector('#directory-pagination .pagination-button[aria-label="Previous page"]') || document.querySelectorAll('#directory-pagination .pagination-button')[0],
+        nextPageButton: document.querySelector('#directory-pagination .pagination-button[aria-label="Next page"]') || document.querySelectorAll('#directory-pagination .pagination-button')[1],
         dashboardVersion: document.getElementById("dashboard-version"),
         resetButton: document.getElementById("reset-filters")
     };
@@ -152,11 +156,20 @@ function initializeDashboard() {
     attachFilterEvents();
     attachSearchEvents();
     attachResetEvents();
+    // Initialize Chart placeholders and manager (Sprint 3.8)
+    if (typeof initializeCharts === "function") {
+        try {
+            initializeCharts();
+        } catch (err) {
+            console.warn("[Dashboard] initializeCharts failed:", err);
+        }
+    }
 
     loadCsvData()
         .then(function (data) {
             var validatedData = validateData(data);
             initializeState(validatedData);
+            attachPaginationEvents();
             renderDashboard();
         })
         .catch(function (error) {
@@ -272,7 +285,6 @@ function resetDashboardState() {
     applyFilters();
     applySearch();
     applyPagination();
-    updateVisibleData();
 }
 
 function calculateTotalPages(recordCount, pageSize) {
@@ -289,9 +301,15 @@ function renderDashboard() {
     populateFilters();
     populateMetadata();
 
-    // Future Sprint
-    // renderCharts();
-    // renderHeatmap();
+    // Chart rendering hook (placeholder charts for Sprint 3.8)
+    if (typeof renderCharts === "function") {
+        try {
+            renderCharts();
+        } catch (err) {
+            console.warn("[Dashboard] renderCharts failed:", err);
+        }
+    }
+    // Heatmap is future work and intentionally not implemented in this sprint
 }
 
 function attachFilterEvents() {
@@ -359,8 +377,9 @@ function clearSearchInput() {
 function runDashboardPipeline() {
     applyFilters();
     applySearch();
+    // Ensure pagination starts from the first page after a filter/search change
+    dashboardState.pagination.currentPage = 1;
     applyPagination();
-    updateVisibleData();
 }
 
 function updateFilterState(filterName, value) {
@@ -424,27 +443,574 @@ function applySearch() {
 }
 
 function applyPagination() {
-    var recordCount = Array.isArray(dashboardState.searchedData) ? dashboardState.searchedData.length : 0;
+    // Centralized pagination logic: compute totals, clamp page, slice searchedData, and update visibleData
+    var totalRecords = Array.isArray(dashboardState.searchedData) ? dashboardState.searchedData.length : 0;
     var pageSize = dashboardState.pagination.pageSize || CONFIG.PAGE_SIZE;
-    var totalPages = calculateTotalPages(recordCount, pageSize);
-    var currentPage = dashboardState.pagination.currentPage || 1;
+    var totalPages = calculateTotalPages(totalRecords, pageSize);
+    var currentPage = Number(dashboardState.pagination.currentPage) || 1;
 
+    // Boundary protection
     if (currentPage < 1) {
         currentPage = 1;
+    }
+
+    if (totalPages < 1) {
+        totalPages = 1;
     }
 
     if (currentPage > totalPages) {
         currentPage = totalPages;
     }
 
+    // Calculate slice indices (0-based)
+    var startIndex = (currentPage - 1) * pageSize;
+    var endIndex = startIndex + pageSize;
+
+    // Update dashboard state
     dashboardState.pagination.currentPage = currentPage;
     dashboardState.pagination.pageSize = pageSize;
     dashboardState.pagination.totalPages = totalPages;
+    dashboardState.pagination.totalRecords = totalRecords;
+
+    // Slice searchedData to visibleData (this ensures KPIs/charts keep using searchedData)
+    dashboardState.visibleData = (Array.isArray(dashboardState.searchedData) ? dashboardState.searchedData : []).slice(startIndex, endIndex);
+
+    // Update footer and controls
+    updatePaginationFooter(startIndex, endIndex, totalRecords);
 }
 
-function renderCharts() {}
+function updatePaginationFooter(startIndex, endIndex, totalRecords) {
+    if (!DOM.directoryCount) {
+        return;
+    }
 
-function renderHeatmap() {}
+    var total = Number(totalRecords) || 0;
+
+    if (total === 0) {
+        DOM.directoryCount.textContent = "0 of 0";
+    } else {
+        var start = Number(startIndex) + 1;
+        var end = Math.min(total, Number(endIndex));
+        DOM.directoryCount.textContent = start + "\u2013" + end + " of " + total;
+    }
+
+    // Update button disabled states
+    if (DOM.prevPageButton) {
+        DOM.prevPageButton.disabled = dashboardState.pagination.currentPage <= 1;
+    }
+
+    if (DOM.nextPageButton) {
+        DOM.nextPageButton.disabled = dashboardState.pagination.currentPage >= dashboardState.pagination.totalPages;
+    }
+}
+
+function goToNextPage() {
+    setTimeout(function () {
+        var next = (dashboardState.pagination.currentPage || 1) + 1;
+        goToPage(next);
+    }, 0);
+}
+
+function goToPreviousPage() {
+    setTimeout(function () {
+        var prev = (dashboardState.pagination.currentPage || 1) - 1;
+        goToPage(prev);
+    }, 0);
+}
+
+function goToPage(page) {
+    var total = dashboardState.pagination.totalPages || 1;
+    var target = Number(page) || 1;
+
+    if (target < 1) {
+        target = 1;
+    }
+
+    if (target > total) {
+        target = total;
+    }
+
+    dashboardState.pagination.currentPage = target;
+    applyPagination();
+    // Only re-render the directory to avoid unnecessary work
+    populateDirectory();
+}
+
+function attachPaginationEvents() {
+    if (paginationEventsAttached) {
+        return;
+    }
+
+    if (DOM.prevPageButton) {
+        DOM.prevPageButton.addEventListener('click', function () {
+            goToPreviousPage();
+        });
+    }
+
+    if (DOM.nextPageButton) {
+        DOM.nextPageButton.addEventListener('click', function () {
+            goToNextPage();
+        });
+    }
+
+    paginationEventsAttached = true;
+}
+
+/* =======================================================
+   CHART MANAGER
+   Centralized manager for Chart.js instances and lifecycle
+   ======================================================= */
+
+var CHART_IDS = {
+    Region: "chart-region",
+    Category: "chart-category",
+    Trend: "chart-trend",
+    Coverage: "chart-coverage",
+    State: "chart-state"
+};
+
+var ChartManager = (function () {
+    var registry = {};
+
+    function has(key) {
+        return Object.prototype.hasOwnProperty.call(registry, key);
+    }
+
+    function registerChart(key, canvasId, config) {
+        if (!key || !canvasId) {
+            console.warn("[ChartManager] registerChart missing key or canvasId");
+            return null;
+        }
+
+        if (has(key)) {
+            return registry[key].chart;
+        }
+
+        var canvas = document.getElementById(canvasId);
+
+        if (!canvas) {
+            console.warn("[ChartManager] Canvas not found:", canvasId);
+            return null;
+        }
+
+        var ctx = canvas.getContext("2d");
+
+        var chartInstance = null;
+
+        try {
+            chartInstance = new Chart(ctx, config || { type: "bar", data: { labels: ["Loading..."], datasets: [{ label: "Value", data: [0] }] }, options: CONFIG.CHART.OPTIONS });
+        } catch (err) {
+            console.error("[ChartManager] Failed to create chart:", err);
+            return null;
+        }
+
+        registry[key] = {
+            chart: chartInstance,
+            canvasId: canvasId
+        };
+
+        return chartInstance;
+    }
+
+    function getChart(key) {
+        return has(key) ? registry[key].chart : null;
+    }
+
+    function updateChart(key, config) {
+        if (!has(key)) {
+            // Create if it does not exist
+            return registerChart(key, CHART_IDS[key], config);
+        }
+
+        var entry = registry[key];
+        var chart = entry.chart;
+
+        if (!chart) {
+            return registerChart(key, entry.canvasId, config);
+        }
+
+        // Replace data and options in-place and update
+        if (config && config.data) {
+            chart.data = config.data;
+        }
+
+        if (config && config.options) {
+            chart.options = config.options;
+        }
+
+        try {
+            chart.update();
+        } catch (err) {
+            console.warn("[ChartManager] updateChart failed for", key, err);
+        }
+
+        return chart;
+    }
+
+    function destroyChart(key) {
+        if (!has(key)) {
+            return;
+        }
+
+        try {
+            var chart = registry[key].chart;
+
+            if (chart && typeof chart.destroy === "function") {
+                chart.destroy();
+            }
+        } catch (err) {
+            console.warn("[ChartManager] destroyChart failed for", key, err);
+        }
+
+        delete registry[key];
+    }
+
+    function destroyAllCharts() {
+        Object.keys(registry).forEach(function (key) {
+            destroyChart(key);
+        });
+    }
+
+    return {
+        registerChart: registerChart,
+        getChart: getChart,
+        updateChart: updateChart,
+        destroyChart: destroyChart,
+        destroyAllCharts: destroyAllCharts
+    };
+})();
+
+
+/* =======================================================
+   CHART INITIALIZATION / LIFECYCLE HOOKS
+   ======================================================= */
+
+function buildPlaceholderDataset() {
+    var palette = (CONFIG.CHART && CONFIG.CHART.PALETTE) || ["#2563eb"];
+
+    return {
+        labels: ["Loading..."],
+        datasets: [
+            {
+                label: "Value",
+                data: [0],
+                backgroundColor: palette[0]
+            }
+        ]
+    };
+}
+
+function initializeCharts() {
+    // Idempotent initialization: registering placeholders only
+    Object.keys(CHART_IDS).forEach(function (key) {
+        var canvasId = CHART_IDS[key];
+
+        // default chart type selection (placeholder only)
+        var defaultType = key === "Trend" ? "line" : key === "Coverage" ? "doughnut" : "bar";
+
+        var config = {
+            type: defaultType,
+            data: buildPlaceholderDataset(),
+            options: CONFIG.CHART ? CONFIG.CHART.OPTIONS : { responsive: true }
+        };
+
+        ChartManager.registerChart(key, canvasId, config);
+    });
+
+    console.log("[Dashboard] Charts initialized (placeholders)");
+}
+
+
+/* =======================================================
+   FUTURE AGGREGATION PLACEHOLDERS (SIGNATURES ONLY)
+   ======================================================= */
+
+var Aggregation = (function () {
+    function normalizeRecords(data) {
+        return Array.isArray(data) ? data : [];
+    }
+
+    function normalizeLabel(value) {
+        var label = String(value || "").trim();
+        return label || "Unknown";
+    }
+
+    function createSingleDataset(labels, label, values) {
+        return {
+            labels: labels,
+            datasets: [
+                {
+                    label: label,
+                    data: values
+                }
+            ]
+        };
+    }
+
+    function countByField(data, fieldName) {
+        var counts = {};
+        var labels = [];
+
+        normalizeRecords(data).forEach(function (record) {
+            var currentRecord = record || {};
+            var label = normalizeLabel(currentRecord[fieldName]);
+
+            if (!Object.prototype.hasOwnProperty.call(counts, label)) {
+                counts[label] = 0;
+                labels.push(label);
+            }
+
+            counts[label] += 1;
+        });
+
+        return {
+            labels: labels,
+            data: labels.map(function (label) {
+                return counts[label];
+            })
+        };
+    }
+
+    /**
+     * Aggregation.region()
+     * Input: searchedData
+     * Output: { labels: [], datasets: [] }
+     */
+    function region(data) {
+        var summary = countByField(data, "Region");
+        return createSingleDataset(summary.labels, "Institutions by Region", summary.data);
+    }
+
+    /**
+     * Aggregation.category()
+     * Input: searchedData
+     * Output: { labels: [], datasets: [] }
+     */
+    function category(data) {
+        var summary = countByField(data, "Category");
+        return createSingleDataset(summary.labels, "Institutions by Category", summary.data);
+    }
+
+    /**
+     * Aggregation.trend()
+     * Input: searchedData
+     * Output: { labels: [], datasets: [] }
+     */
+    function trend(data) {
+        var records = normalizeRecords(data);
+        var years = [
+            { label: "2024", field: "Engaged2024" },
+            { label: "2025", field: "Engaged2025" },
+            { label: "2026", field: "Engaged2026" }
+        ];
+
+        if (!records.length) {
+            return createSingleDataset([], "Engaged Institutions", []);
+        }
+
+        return createSingleDataset(
+            years.map(function (year) {
+                return year.label;
+            }),
+            "Engaged Institutions",
+            years.map(function (year) {
+                return records.filter(function (record) {
+                    var currentRecord = record || {};
+                    return isTrue(currentRecord[year.field]);
+                }).length;
+            })
+        );
+    }
+
+    /**
+     * Aggregation.coverage()
+     * Input: searchedData
+     * Output: { labels: [], datasets: [] }
+     */
+    function coverage(data) {
+        var counts = {};
+        var labels = [];
+
+        normalizeRecords(data).forEach(function (record) {
+            var currentRecord = record || {};
+            var label = normalizeLabel(currentRecord.Region);
+
+            if (!Object.prototype.hasOwnProperty.call(counts, label)) {
+                counts[label] = {
+                    engaged: 0,
+                    nonEngaged: 0
+                };
+                labels.push(label);
+            }
+
+            if (isTrue(currentRecord.EverEngaged)) {
+                counts[label].engaged += 1;
+            } else {
+                counts[label].nonEngaged += 1;
+            }
+        });
+
+        return {
+            labels: labels,
+            datasets: [
+                {
+                    label: "Engaged",
+                    data: labels.map(function (label) {
+                        return counts[label].engaged;
+                    })
+                },
+                {
+                    label: "Non Engaged",
+                    data: labels.map(function (label) {
+                        return counts[label].nonEngaged;
+                    })
+                }
+            ]
+        };
+    }
+
+    /**
+     * Aggregation.topStates()
+     * Input: searchedData
+     * Output: { labels: [], datasets: [] }
+     */
+    function topStates(data) {
+        var summary = countByField(data, "State");
+        var rankedStates = summary.labels.map(function (label, index) {
+            return {
+                label: label,
+                count: summary.data[index]
+            };
+        }).sort(function (firstState, secondState) {
+            if (secondState.count !== firstState.count) {
+                return secondState.count - firstState.count;
+            }
+
+            return sortTextValues(firstState.label, secondState.label);
+        }).slice(0, 10);
+
+        return createSingleDataset(
+            rankedStates.map(function (state) {
+                return state.label;
+            }),
+            "Top States by Institution Count",
+            rankedStates.map(function (state) {
+                return state.count;
+            })
+        );
+    }
+
+    /**
+     * Aggregation.buildDashboardData()
+     * Input: searchedData
+     * Output: analytics snapshot containing all aggregation datasets
+     */
+    function buildDashboardData(data) {
+        return {
+            region: region(data),
+            category: category(data),
+            trend: trend(data),
+            coverage: coverage(data),
+            topStates: topStates(data)
+        };
+    }
+
+    return {
+        region: region,
+        category: category,
+        trend: trend,
+        coverage: coverage,
+        topStates: topStates,
+        buildDashboardData: buildDashboardData
+    };
+})();
+
+function getRegionSummary(searchedData) {
+    // TODO: implement aggregation in future sprint
+    return buildPlaceholderDataset();
+}
+
+function getCategorySummary(searchedData) {
+    // TODO: implement aggregation in future sprint
+    return buildPlaceholderDataset();
+}
+
+function getEngagementTrend(searchedData) {
+    // TODO: implement aggregation in future sprint
+    return buildPlaceholderDataset();
+}
+
+function getCoverageByRegion(searchedData) {
+    // TODO: implement aggregation in future sprint
+    return buildPlaceholderDataset();
+}
+
+function getTopStates(searchedData) {
+    // TODO: implement aggregation in future sprint
+    return buildPlaceholderDataset();
+}
+
+
+/* =======================================================
+   FUTURE CHART RENDERERS / HOOKS
+   ======================================================= */
+
+function renderCharts() {
+    // For this sprint we render placeholder datasets only.
+    // In future sprints, call aggregation functions (e.g. getRegionSummary)
+    // to obtain datasets derived from `dashboardState.searchedData`.
+
+    try {
+        // Example mapping from keys to aggregation stubs (placeholder)
+        var mappings = {
+            Region: getRegionSummary,
+            Category: getCategorySummary,
+            Trend: getEngagementTrend,
+            Coverage: getCoverageByRegion,
+            State: getTopStates
+        };
+
+        Object.keys(CHART_IDS).forEach(function (key) {
+            var aggregator = mappings[key];
+            var dataset = null;
+
+            if (typeof aggregator === "function") {
+                dataset = aggregator(dashboardState.searchedData || []);
+            }
+
+            // Fallback to placeholder if aggregator returns falsy
+            if (!dataset) {
+                dataset = buildPlaceholderDataset();
+            }
+
+            var defaultType = key === "Trend" ? "line" : key === "Coverage" ? "doughnut" : "bar";
+
+            var config = {
+                type: defaultType,
+                data: dataset,
+                options: CONFIG.CHART ? CONFIG.CHART.OPTIONS : { responsive: true }
+            };
+
+            ChartManager.updateChart(key, config);
+        });
+    } catch (err) {
+        console.warn("[Dashboard] renderCharts encountered an error:", err);
+    }
+}
+
+function updateCharts() {
+    // Alias for renderCharts - kept for future semantic separation
+    renderCharts();
+}
+
+function destroyCharts() {
+    ChartManager.destroyAllCharts();
+}
+
+
+function renderHeatmap() {
+    // Intentionally left unimplemented for Sprint 3.8
+}
 
 function populateKpi() {
     var data = dashboardState.searchedData;

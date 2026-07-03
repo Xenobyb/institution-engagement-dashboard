@@ -32,4 +32,22 @@ const CONFIG = {
         "false"
     ],
     NO_ENGAGEMENT_YEAR_VALUE: "Never"
+    ,
+    CHART: {
+        PALETTE: [
+            "#2563eb",
+            "#1d4ed8",
+            "#60a5fa",
+            "#34d399",
+            "#f59e0b"
+        ],
+        OPTIONS: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: true },
+                tooltip: { enabled: true }
+            }
+        }
+    }
 };
