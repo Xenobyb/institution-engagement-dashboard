@@ -156,6 +156,7 @@ function initializeDashboard() {
     attachFilterEvents();
     attachSearchEvents();
     attachResetEvents();
+    HeatmapTooltip.initialize();
     // Initialize Chart placeholders and manager (Sprint 3.8)
     if (typeof initializeCharts === "function") {
         try {
@@ -309,7 +310,14 @@ function renderDashboard() {
             console.warn("[Dashboard] renderCharts failed:", err);
         }
     }
-    // Heatmap is future work and intentionally not implemented in this sprint
+
+    if (typeof renderHeatmap === "function") {
+        try {
+            renderHeatmap();
+        } catch (err) {
+            console.warn("[Dashboard] renderHeatmap failed:", err);
+        }
+    }
 }
 
 function attachFilterEvents() {
@@ -569,6 +577,402 @@ var CHART_IDS = {
     State: "chart-state"
 };
 
+var CHART_COLORS = {
+    blue: "#3B82F6",
+    green: "#22C55E",
+    yellow: "#FACC15",
+    red: "#EF4444",
+    purple: "#8B5CF6",
+    primary: "#3B82F6",
+    primaryDark: "#2563EB",
+    primaryLight: "#60A5FA",
+    success: "#22C55E",
+    warning: "#FACC15",
+    danger: "#EF4444",
+    text: "#AEB8C9",
+    muted: "#7C879C",
+    grid: "rgba(255, 255, 255, 0.06)",
+    border: "rgba(255, 255, 255, 0.08)",
+    palette: (CONFIG.CHART && CONFIG.CHART.PALETTE) || [
+        "#3B82F6",
+        "#22C55E",
+        "#8B5CF6",
+        "#FACC15",
+        "#EF4444"
+    ],
+    heatmap: {
+        empty: "#111827",
+        low: "#3B82F6",
+        medium: "#22C55E",
+        high: "#FACC15",
+        full: "#EF4444"
+    }
+};
+
+function getFontFamily() {
+    return "SF Pro Display, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+}
+
+function formatPercentage(value) {
+    var numericValue = Number(value || 0);
+
+    if (!Number.isFinite(numericValue)) {
+        return "0%";
+    }
+
+    var normalizedValue = numericValue > 1 ? numericValue / 100 : numericValue;
+    return Math.round(normalizedValue * 100) + "%";
+}
+
+var ChartTheme = {
+    colors: {
+        primary: CHART_COLORS.blue,
+        success: CHART_COLORS.green,
+        warning: CHART_COLORS.yellow,
+        danger: CHART_COLORS.red,
+        purple: CHART_COLORS.purple,
+        text: CHART_COLORS.text,
+        muted: CHART_COLORS.muted,
+        grid: CHART_COLORS.grid,
+        border: CHART_COLORS.border
+    },
+    grid: {
+        color: CHART_COLORS.grid,
+        lineWidth: 1,
+        drawBorder: false
+    },
+    axes: {
+        ticks: {
+            color: CHART_COLORS.muted,
+            font: {
+                family: getFontFamily(),
+                size: 12,
+                weight: 500
+            }
+        },
+        title: {
+            color: CHART_COLORS.text,
+            font: {
+                family: getFontFamily(),
+                size: 12,
+                weight: 600
+            }
+        },
+        border: {
+            display: false
+        }
+    },
+    legend: {
+        labels: {
+            color: CHART_COLORS.text,
+            padding: 16,
+            boxWidth: 12,
+            boxHeight: 12,
+            font: {
+                family: getFontFamily(),
+                size: 12,
+                weight: 500
+            }
+        }
+    },
+    tooltip: {
+        backgroundColor: "rgba(15, 23, 42, 0.96)",
+        titleColor: "#F8FAFC",
+        bodyColor: "#F8FAFC",
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        borderWidth: 1,
+        padding: 10,
+        cornerRadius: 8,
+        displayColors: true
+    }
+};
+
+var ChartOptions = {
+    base: function (overrides) {
+        var options = {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 600,
+                easing: "easeOutQuart"
+            },
+            interaction: {
+                intersect: false,
+                mode: "index"
+            },
+            layout: {
+                padding: {
+                    top: 14,
+                    right: 8,
+                    bottom: 8,
+                    left: 8
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: "bottom",
+                    labels: ChartTheme.legend.labels
+                },
+                tooltip: ChartTheme.tooltip
+            }
+        };
+
+        return Object.assign(options, overrides || {});
+    },
+    bar: function (overrides) {
+        var options = ChartOptions.base({
+            indexAxis: "x",
+            plugins: {
+                legend: {
+                    display: false,
+                    labels: ChartTheme.legend.labels
+                },
+                tooltip: ChartTheme.tooltip
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: CHART_COLORS.muted,
+                        font: ChartTheme.axes.ticks.font,
+                        precision: 0
+                    },
+                    grid: ChartTheme.grid,
+                    border: ChartTheme.axes.border
+                },
+                y: {
+                    ticks: {
+                        color: CHART_COLORS.muted,
+                        font: ChartTheme.axes.ticks.font
+                    },
+                    grid: {
+                        color: "rgba(255, 255, 255, 0.03)",
+                        drawBorder: false
+                    },
+                    border: ChartTheme.axes.border
+                }
+            }
+        });
+
+        return Object.assign(options, overrides || {});
+    },
+    line: function (overrides) {
+        var options = ChartOptions.base({
+            plugins: {
+                legend: {
+                    display: false,
+                    labels: ChartTheme.legend.labels
+                },
+                tooltip: ChartTheme.tooltip
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: CHART_COLORS.muted,
+                        font: ChartTheme.axes.ticks.font
+                    },
+                    grid: {
+                        color: "rgba(255, 255, 255, 0.03)",
+                        drawBorder: false
+                    },
+                    border: ChartTheme.axes.border
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: CHART_COLORS.muted,
+                        font: ChartTheme.axes.ticks.font,
+                        precision: 0
+                    },
+                    grid: {
+                        color: "rgba(255, 255, 255, 0.03)",
+                        drawBorder: false
+                    },
+                    border: ChartTheme.axes.border
+                }
+            }
+        });
+
+        return Object.assign(options, overrides || {});
+    },
+    horizontal: function (overrides) {
+        var options = ChartOptions.base({
+            indexAxis: "y",
+            interaction: {
+                mode: "nearest",
+                axis: "y",
+                intersect: true
+            },
+            plugins: {
+                legend: {
+                    display: false,
+                    labels: ChartTheme.legend.labels
+                },
+                tooltip: ChartTheme.tooltip
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: CHART_COLORS.muted,
+                        font: ChartTheme.axes.ticks.font,
+                        precision: 0
+                    },
+                    grid: {
+                        color: "rgba(255, 255, 255, 0.03)",
+                        drawBorder: false
+                    },
+                    border: ChartTheme.axes.border
+                },
+                y: {
+                    ticks: {
+                        color: CHART_COLORS.muted,
+                        font: ChartTheme.axes.ticks.font
+                    },
+                    grid: {
+                        color: "rgba(255, 255, 255, 0.03)",
+                        drawBorder: false
+                    },
+                    border: ChartTheme.axes.border
+                }
+            }
+        });
+
+        return Object.assign(options, overrides || {});
+    },
+    horizontalStacked: function (overrides) {
+        var options = ChartOptions.horizontal({
+            interaction: {
+                mode: "index",
+                axis: "y",
+                intersect: true
+            },
+            scales: {
+                x: {
+                    stacked: true,
+                    max: 1,
+                    ticks: {
+                        color: CHART_COLORS.muted,
+                        font: ChartTheme.axes.ticks.font,
+                        callback: function (value) {
+                            return (Number(value) * 100).toFixed(0) + "%";
+                        }
+                    },
+                    grid: {
+                        color: "rgba(255, 255, 255, 0.03)",
+                        drawBorder: false
+                    },
+                    border: ChartTheme.axes.border
+                },
+                y: {
+                    stacked: true,
+                    ticks: {
+                        color: CHART_COLORS.muted,
+                        font: ChartTheme.axes.ticks.font
+                    },
+                    grid: {
+                        color: "rgba(255, 255, 255, 0.03)",
+                        drawBorder: false
+                    },
+                    border: ChartTheme.axes.border
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: "bottom",
+                    labels: ChartTheme.legend.labels
+                },
+                tooltip: Object.assign({}, ChartTheme.tooltip, {
+                    callbacks: {
+                        title: function (items) {
+                            var item = items && items[0] ? items[0] : null;
+                            var label = item && item.label ? item.label : "";
+                            var chartLabel = item && item.chart && item.chart.data && item.chart.data.labels && item.dataIndex !== undefined
+                                ? item.chart.data.labels[item.dataIndex]
+                                : label;
+                            return chartLabel || label;
+                        },
+                        label: function (context) {
+                            return context.dataset.label + ": " + formatPercentage(context.parsed.x);
+                        }
+                    }
+                })
+            }
+        });
+
+        return Object.assign(options, overrides || {});
+    },
+    doughnut: function (overrides) {
+        var options = ChartOptions.base({
+            cutout: "62%",
+            plugins: {
+                legend: {
+                    position: "bottom",
+                    labels: ChartTheme.legend.labels
+                },
+                tooltip: ChartTheme.tooltip
+            }
+        });
+
+        return Object.assign(options, overrides || {});
+    },
+    stacked: function (overrides) {
+        var options = ChartOptions.bar({
+            indexAxis: "y",
+            scales: {
+                x: {
+                    stacked: true,
+                    max: 1,
+                    ticks: {
+                        color: CHART_COLORS.muted,
+                        font: ChartTheme.axes.ticks.font,
+                        callback: function (value) {
+                            return (Number(value) * 100).toFixed(0) + "%";
+                        }
+                    },
+                    grid: {
+                        color: "rgba(255, 255, 255, 0.03)",
+                        drawBorder: false
+                    },
+                    border: ChartTheme.axes.border
+                },
+                y: {
+                    stacked: true,
+                    ticks: {
+                        color: CHART_COLORS.muted,
+                        font: ChartTheme.axes.ticks.font
+                    },
+                    grid: {
+                        color: "rgba(255, 255, 255, 0.03)",
+                        drawBorder: false
+                    },
+                    border: ChartTheme.axes.border
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: "bottom",
+                    labels: ChartTheme.legend.labels
+                },
+                tooltip: Object.assign({}, ChartTheme.tooltip, {
+                    callbacks: {
+                        label: function (context) {
+                            var percent = Number(context.parsed.x || 0) * 100;
+                            return context.dataset.label + ": " + percent.toFixed(0) + "%";
+                        }
+                    }
+                })
+            }
+        });
+
+        return Object.assign(options, overrides || {});
+    }
+};
+
+
 var ChartManager = (function () {
     var registry = {};
 
@@ -609,6 +1013,8 @@ var ChartManager = (function () {
             canvasId: canvasId
         };
 
+        handleChartRenderSuccess(canvasId);
+
         return chartInstance;
     }
 
@@ -638,13 +1044,50 @@ var ChartManager = (function () {
             chart.options = config.options;
         }
 
+        if (config && config.type && chart.config) {
+            chart.config.type = config.type;
+        }
+
         try {
-            chart.update();
+            chart.update("none");
+            handleChartRenderSuccess(entry.canvasId);
         } catch (err) {
             console.warn("[ChartManager] updateChart failed for", key, err);
+            toggleChartPlaceholder(entry.canvasId, true);
         }
 
         return chart;
+    }
+
+    function updateAll(analytics) {
+        var snapshot = analytics || {};
+        var updates = {
+            Region: function () {
+                return buildChartConfig("Region", snapshot.region);
+            },
+            Category: function () {
+                return buildChartConfig("Category", snapshot.category);
+            },
+            Trend: function () {
+                return buildChartConfig("Trend", snapshot.trend);
+            },
+            Coverage: function () {
+                return buildChartConfig("Coverage", snapshot.coverage);
+            },
+            State: function () {
+                return buildChartConfig("State", snapshot.topStates);
+            }
+        };
+
+        Object.keys(updates).forEach(function (key) {
+            try {
+                var config = updates[key]();
+
+                updateChart(key, config);
+            } catch (err) {
+                console.warn("[ChartManager] updateAll skipped " + key + " chart:", err);
+            }
+        });
     }
 
     function destroyChart(key) {
@@ -675,6 +1118,7 @@ var ChartManager = (function () {
         registerChart: registerChart,
         getChart: getChart,
         updateChart: updateChart,
+        updateAll: updateAll,
         destroyChart: destroyChart,
         destroyAllCharts: destroyAllCharts
     };
@@ -686,18 +1130,400 @@ var ChartManager = (function () {
    ======================================================= */
 
 function buildPlaceholderDataset() {
-    var palette = (CONFIG.CHART && CONFIG.CHART.PALETTE) || ["#2563eb"];
-
     return {
         labels: ["Loading..."],
         datasets: [
             {
                 label: "Value",
                 data: [0],
-                backgroundColor: palette[0]
+                backgroundColor: CHART_COLORS.primary
             }
         ]
     };
+}
+
+function getChartType(key) {
+    if (key === "Category") {
+        return "doughnut";
+    }
+
+    if (key === "Trend") {
+        return "line";
+    }
+
+    return "bar";
+}
+
+function getPaletteColor(index) {
+    var palette = CHART_COLORS.palette;
+    return palette[index % palette.length];
+}
+
+function cloneChartData(data) {
+    var source = data || {};
+    var labels = Array.isArray(source.labels) ? source.labels.slice() : [];
+    var datasets = Array.isArray(source.datasets) ? source.datasets.map(function (dataset) {
+        var copy = {};
+
+        Object.keys(dataset || {}).forEach(function (key) {
+            copy[key] = Array.isArray(dataset[key]) ? dataset[key].slice() : dataset[key];
+        });
+
+        copy.data = Array.isArray(copy.data) ? copy.data.slice() : [];
+        return copy;
+    }) : [];
+
+    return {
+        labels: labels,
+        datasets: datasets
+    };
+}
+
+function hasUsableChartData(data) {
+    return Boolean(
+        data &&
+        Array.isArray(data.labels) &&
+        data.labels.length &&
+        Array.isArray(data.datasets) &&
+        data.datasets.some(function (dataset) {
+            return Array.isArray(dataset.data) && dataset.data.length;
+        })
+    );
+}
+
+function buildEmptyChartData(label) {
+    return {
+        labels: [],
+        datasets: [
+            {
+                label: label,
+                data: []
+            }
+        ]
+    };
+}
+
+function styleSingleBarData(data, color, labelPosition) {
+    var chartData = cloneChartData(data);
+
+    chartData.datasets.forEach(function (dataset) {
+        dataset.backgroundColor = chartData.labels.map(function (label, index) {
+            return getPaletteColor(index);
+        });
+        dataset.borderColor = color || CHART_COLORS.primary;
+        dataset.borderWidth = 1;
+        dataset.borderRadius = 8;
+        dataset.borderSkipped = false;
+        dataset.barPercentage = 0.8;
+        dataset.categoryPercentage = 0.8;
+        dataset.valueLabelPosition = labelPosition || "top";
+    });
+
+    return chartData;
+}
+
+function styleDoughnutData(data) {
+    var chartData = cloneChartData(data);
+
+    chartData.datasets.forEach(function (dataset) {
+        dataset.backgroundColor = chartData.labels.map(function (label, index) {
+            return getPaletteColor(index);
+        });
+        dataset.borderColor = "rgba(15, 23, 42, 0.94)";
+        dataset.borderWidth = 3;
+        dataset.hoverOffset = 4;
+    });
+
+    return chartData;
+}
+
+function styleLineData(data) {
+    var chartData = cloneChartData(data);
+
+    chartData.datasets.forEach(function (dataset) {
+        dataset.borderColor = CHART_COLORS.blue;
+        dataset.backgroundColor = "rgba(59, 130, 246, 0)";
+        dataset.borderWidth = 2.5;
+        dataset.fill = false;
+        dataset.tension = 0.35;
+        dataset.pointBackgroundColor = CHART_COLORS.blue;
+        dataset.pointBorderColor = "#F8FAFC";
+        dataset.pointBorderWidth = 2;
+        dataset.pointRadius = 4;
+        dataset.pointHoverRadius = 6;
+    });
+
+    return chartData;
+}
+
+function styleCoverageData(data) {
+    var chartData = cloneChartData(data);
+    var coverageColors = [CHART_COLORS.green, CHART_COLORS.red];
+
+    chartData.datasets.forEach(function (dataset, index) {
+        dataset.backgroundColor = coverageColors[index] || getPaletteColor(index);
+        dataset.borderColor = "rgba(255, 255, 255, 0.06)";
+        dataset.borderWidth = 1;
+    });
+
+    return chartData;
+}
+
+function normalizePercentageData(data) {
+    var chartData = cloneChartData(data);
+
+    if (!chartData.labels.length || !chartData.datasets.length) {
+        return chartData;
+    }
+
+    chartData.labels = chartData.labels.slice();
+    chartData.datasets = chartData.datasets.map(function (dataset) {
+        var normalizedDataset = Object.assign({}, dataset);
+        normalizedDataset.data = Array.isArray(dataset.data) ? dataset.data.slice() : [];
+        return normalizedDataset;
+    });
+
+    var totals = chartData.labels.map(function (label, index) {
+        return chartData.datasets.reduce(function (sum, dataset) {
+            return sum + (Number(dataset.data[index]) || 0);
+        }, 0);
+    });
+
+    chartData.datasets.forEach(function (dataset) {
+        var normalizedValues = chartData.labels.map(function (label, index) {
+            var total = totals[index] || 0;
+            return total > 0 ? (Number(dataset.data[index]) || 0) / total : 0;
+        });
+
+        dataset.data = normalizedValues;
+    });
+
+    return chartData;
+}
+
+function getBaseChartOptions(showLegend) {
+    return ChartOptions.base({
+        plugins: {
+            legend: Object.assign({}, ChartTheme.legend, {
+                display: Boolean(showLegend)
+            }),
+            tooltip: ChartTheme.tooltip
+        }
+    });
+}
+
+function getAxisOptions(stacked) {
+    return {
+        x: {
+            beginAtZero: true,
+            stacked: Boolean(stacked),
+            ticks: {
+                color: CHART_COLORS.muted,
+                font: ChartTheme.axes.ticks.font,
+                precision: 0
+            },
+            grid: ChartTheme.grid,
+            border: ChartTheme.axes.border
+        },
+        y: {
+            stacked: Boolean(stacked),
+            ticks: {
+                color: CHART_COLORS.muted,
+                font: ChartTheme.axes.ticks.font
+            },
+            grid: {
+                color: "rgba(255, 255, 255, 0.03)",
+                drawBorder: false
+            },
+            border: ChartTheme.axes.border
+        }
+    };
+}
+
+function getChartOptions(key) {
+    if (key === "Region") {
+        return ChartOptions.bar({
+            plugins: {
+                legend: {
+                    display: false,
+                    labels: ChartTheme.legend.labels
+                },
+                tooltip: ChartTheme.tooltip
+            },
+            scales: getAxisOptions(false),
+            datasets: {
+                bar: {
+                    borderRadius: 8,
+                    borderSkipped: false,
+                    barPercentage: 0.8,
+                    categoryPercentage: 0.8
+                }
+            }
+        });
+    }
+
+    if (key === "State") {
+        return ChartOptions.horizontal({
+            scales: getAxisOptions(false),
+            plugins: {
+                legend: {
+                    display: false,
+                    labels: ChartTheme.legend.labels
+                },
+                tooltip: Object.assign({}, ChartTheme.tooltip, {
+                    callbacks: {
+                        title: function (items) {
+                            var item = items && items[0] ? items[0] : null;
+                            var label = item && item.label ? item.label : "";
+                            var chartLabel = item && item.chart && item.chart.data && item.chart.data.labels && item.dataIndex !== undefined
+                                ? item.chart.data.labels[item.dataIndex]
+                                : label;
+                            return chartLabel || label;
+                        },
+                        label: function (context) {
+                            return context.dataset.label + ": " + context.parsed.x;
+                        }
+                    }
+                })
+            },
+            datasets: {
+                bar: {
+                    borderRadius: 8,
+                    borderSkipped: false,
+                    barPercentage: 0.72,
+                    categoryPercentage: 0.75
+                }
+            }
+        });
+    }
+
+    if (key === "Coverage") {
+        return ChartOptions.horizontalStacked({
+            plugins: {
+                legend: {
+                    display: true,
+                    position: "bottom",
+                    labels: ChartTheme.legend.labels
+                },
+                tooltip: Object.assign({}, ChartTheme.tooltip, {
+                    callbacks: {
+                        title: function (items) {
+                            var item = items && items[0] ? items[0] : null;
+                            var label = item && item.label ? item.label : "";
+                            var chartLabel = item && item.chart && item.chart.data && item.chart.data.labels && item.dataIndex !== undefined
+                                ? item.chart.data.labels[item.dataIndex]
+                                : label;
+                            return chartLabel || label;
+                        },
+                        label: function (context) {
+                            return context.dataset.label + ": " + formatPercentage(context.parsed.x);
+                        }
+                    }
+                })
+            }
+        });
+    }
+
+    if (key === "Trend") {
+        return ChartOptions.line({
+            scales: getAxisOptions(false),
+            plugins: {
+                legend: {
+                    display: false,
+                    labels: ChartTheme.legend.labels
+                },
+                tooltip: Object.assign({}, ChartTheme.tooltip, {
+                    callbacks: {
+                        title: function (items) {
+                            return items[0] && items[0].label ? items[0].label : "";
+                        },
+                        label: function (context) {
+                            return "Engaged Institutions: " + context.parsed.y;
+                        }
+                    }
+                })
+            }
+        });
+    }
+
+    return ChartOptions.doughnut({
+        plugins: {
+            legend: {
+                display: true,
+                position: "bottom",
+                labels: Object.assign({}, ChartTheme.legend.labels, {
+                    padding: 18
+                })
+            },
+            tooltip: Object.assign({}, ChartTheme.tooltip, {
+                callbacks: {
+                    label: function (context) {
+                        var value = Number(context.parsed) || 0;
+                        var total = context.chart.data.datasets[0].data.reduce(function (sum, item) {
+                            return sum + (Number(item) || 0);
+                        }, 0);
+                        var percent = total ? ((value / total) * 100).toFixed(0) : 0;
+                        return context.label + ": " + value + " (" + percent + "%)";
+                    }
+                }
+            })
+        }
+    });
+}
+
+function getChartDataForKey(key, data) {
+    if (!hasUsableChartData(data)) {
+        console.warn("[ChartManager] " + key + " analytics dataset unavailable or empty");
+        return buildEmptyChartData(key);
+    }
+
+    if (key === "Category") {
+        return styleDoughnutData(data);
+    }
+
+    if (key === "Trend") {
+        return styleLineData(data);
+    }
+
+    if (key === "Coverage") {
+        return normalizePercentageData(styleCoverageData(data));
+    }
+
+    return styleSingleBarData(data, null, key === "State" ? "end" : "top");
+}
+
+function buildChartConfig(key, data) {
+    return {
+        type: getChartType(key),
+        data: getChartDataForKey(key, data),
+        options: getChartOptions(key)
+    };
+}
+
+function toggleChartPlaceholder(canvasId, visible) {
+    var canvas = document.getElementById(canvasId);
+    var placeholder = canvas && canvas.parentElement ? canvas.parentElement.querySelector(".chart-placeholder-copy") : null;
+
+    if (!placeholder) {
+        return;
+    }
+
+    placeholder.hidden = !visible;
+    placeholder.setAttribute("aria-hidden", String(!visible));
+    placeholder.style.display = visible ? "" : "none";
+    placeholder.style.visibility = visible ? "visible" : "hidden";
+    placeholder.style.opacity = visible ? "1" : "0";
+}
+
+function handleChartRenderSuccess(canvasId) {
+    if (typeof requestAnimationFrame === "function") {
+        requestAnimationFrame(function () {
+            toggleChartPlaceholder(canvasId, false);
+        });
+        return;
+    }
+
+    toggleChartPlaceholder(canvasId, false);
 }
 
 function initializeCharts() {
@@ -705,13 +1531,10 @@ function initializeCharts() {
     Object.keys(CHART_IDS).forEach(function (key) {
         var canvasId = CHART_IDS[key];
 
-        // default chart type selection (placeholder only)
-        var defaultType = key === "Trend" ? "line" : key === "Coverage" ? "doughnut" : "bar";
-
         var config = {
-            type: defaultType,
+            type: getChartType(key),
             data: buildPlaceholderDataset(),
-            options: CONFIG.CHART ? CONFIG.CHART.OPTIONS : { responsive: true }
+            options: getChartOptions(key)
         };
 
         ChartManager.registerChart(key, canvasId, config);
@@ -724,6 +1547,26 @@ function initializeCharts() {
 /* =======================================================
    FUTURE AGGREGATION PLACEHOLDERS (SIGNATURES ONLY)
    ======================================================= */
+
+var HEATMAP_SCORE_MODEL = {
+    2026: 100,
+    2025: 70,
+    2024: 40
+};
+
+function calculateHeatmapScore(year) {
+    var numericYear = Number(String(year || "").trim());
+
+    if (!Number.isInteger(numericYear)) {
+        return 0;
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(HEATMAP_SCORE_MODEL, numericYear)) {
+        return 0;
+    }
+
+    return HEATMAP_SCORE_MODEL[numericYear];
+}
 
 var Aggregation = (function () {
     function normalizeRecords(data) {
@@ -870,6 +1713,65 @@ var Aggregation = (function () {
     }
 
     /**
+     * Aggregation.heatmap()
+     * Input: searchedData
+     * Output: state-keyed heatmap analytics object
+     */
+    function heatmap(data) {
+        var summary = {};
+
+        normalizeRecords(data).forEach(function (record) {
+            var currentRecord = record || {};
+            var state = normalizeLabel(currentRecord.State);
+            var latestYearValue = String(currentRecord.LatestEngagementYear || "").trim();
+            var numericYear = Number(latestYearValue);
+
+            if (!Object.prototype.hasOwnProperty.call(summary, state)) {
+                summary[state] = {
+                    totalScore: 0,
+                    institutions: 0,
+                    latestYear: null,
+                    engaged: 0
+                };
+            }
+
+            summary[state].institutions += 1;
+            summary[state].totalScore += calculateHeatmapScore(latestYearValue);
+
+            if (isTrue(currentRecord.EverEngaged)) {
+                summary[state].engaged += 1;
+            }
+
+            if (
+                Number.isInteger(numericYear) &&
+                (summary[state].latestYear === null || numericYear > summary[state].latestYear)
+            ) {
+                summary[state].latestYear = numericYear;
+            }
+        });
+
+        Object.keys(summary).forEach(function (state) {
+            var stateSummary = summary[state];
+            var engagementScore = stateSummary.institutions
+                ? Math.round(stateSummary.totalScore / stateSummary.institutions)
+                : 0;
+
+            summary[state] = {
+                engagementScore: engagementScore,
+                score: engagementScore,
+                institutions: stateSummary.institutions,
+                latestYear: stateSummary.latestYear,
+                engaged: stateSummary.engaged,
+                nonEngaged: stateSummary.institutions - stateSummary.engaged,
+                rank: null,
+                color: null
+            };
+        });
+
+        return summary;
+    }
+
+    /**
      * Aggregation.topStates()
      * Input: searchedData
      * Output: { labels: [], datasets: [] }
@@ -911,7 +1813,8 @@ var Aggregation = (function () {
             category: category(data),
             trend: trend(data),
             coverage: coverage(data),
-            topStates: topStates(data)
+            topStates: topStates(data),
+            heatmap: heatmap(data)
         };
     }
 
@@ -921,78 +1824,19 @@ var Aggregation = (function () {
         trend: trend,
         coverage: coverage,
         topStates: topStates,
+        heatmap: heatmap,
         buildDashboardData: buildDashboardData
     };
 })();
-
-function getRegionSummary(searchedData) {
-    // TODO: implement aggregation in future sprint
-    return buildPlaceholderDataset();
-}
-
-function getCategorySummary(searchedData) {
-    // TODO: implement aggregation in future sprint
-    return buildPlaceholderDataset();
-}
-
-function getEngagementTrend(searchedData) {
-    // TODO: implement aggregation in future sprint
-    return buildPlaceholderDataset();
-}
-
-function getCoverageByRegion(searchedData) {
-    // TODO: implement aggregation in future sprint
-    return buildPlaceholderDataset();
-}
-
-function getTopStates(searchedData) {
-    // TODO: implement aggregation in future sprint
-    return buildPlaceholderDataset();
-}
-
 
 /* =======================================================
    FUTURE CHART RENDERERS / HOOKS
    ======================================================= */
 
 function renderCharts() {
-    // For this sprint we render placeholder datasets only.
-    // In future sprints, call aggregation functions (e.g. getRegionSummary)
-    // to obtain datasets derived from `dashboardState.searchedData`.
-
     try {
-        // Example mapping from keys to aggregation stubs (placeholder)
-        var mappings = {
-            Region: getRegionSummary,
-            Category: getCategorySummary,
-            Trend: getEngagementTrend,
-            Coverage: getCoverageByRegion,
-            State: getTopStates
-        };
-
-        Object.keys(CHART_IDS).forEach(function (key) {
-            var aggregator = mappings[key];
-            var dataset = null;
-
-            if (typeof aggregator === "function") {
-                dataset = aggregator(dashboardState.searchedData || []);
-            }
-
-            // Fallback to placeholder if aggregator returns falsy
-            if (!dataset) {
-                dataset = buildPlaceholderDataset();
-            }
-
-            var defaultType = key === "Trend" ? "line" : key === "Coverage" ? "doughnut" : "bar";
-
-            var config = {
-                type: defaultType,
-                data: dataset,
-                options: CONFIG.CHART ? CONFIG.CHART.OPTIONS : { responsive: true }
-            };
-
-            ChartManager.updateChart(key, config);
-        });
+        var analytics = Aggregation.buildDashboardData(dashboardState.searchedData || []);
+        ChartManager.updateAll(analytics);
     } catch (err) {
         console.warn("[Dashboard] renderCharts encountered an error:", err);
     }
@@ -1007,9 +1851,682 @@ function destroyCharts() {
     ChartManager.destroyAllCharts();
 }
 
+var HEATMAP_CONTAINER_ID = "malaysia-heatmap";
+var HEATMAP_SVG_SOURCE = "../assets/icons/malaysia.svg";
+var HEATMAP_STATE_REGISTRY = {
+    Johor: "Johor",
+    Kedah: "Kedah",
+    Kelantan: "Kelantan",
+    Melaka: "Melaka",
+    "Negeri Sembilan": "Negeri-Sembilan",
+    Pahang: "Pahang",
+    Perak: "Perak",
+    Perlis: "Perlis",
+    "Pulau Pinang": "Pulau-Pinang",
+    Sabah: "Sabah",
+    Sarawak: "Sarawak",
+    Selangor: "Selangor",
+    Terengganu: "Terengganu",
+    "W.P. Kuala Lumpur": "Kuala-Lumpur",
+    "W.P. Labuan": "Labuan",
+    "W.P. Putrajaya": "Putrajaya"
+};
+
+var HeatmapTooltip = (function () {
+    var tooltipEl = null;
+    var TOOLTIP_OFFSET_X = 14;
+    var TOOLTIP_OFFSET_Y = 14;
+    var VIEWPORT_MARGIN = 12;
+    var HEATMAP_COLOR_SCALE = [
+        { score: 0, color: "#ef4444" },
+        { score: 25, color: "#f97316" },
+        { score: 50, color: "#facc15" },
+        { score: 75, color: "#84cc16" },
+        { score: 100, color: "#22c55e" }
+    ];
+
+    function clampScore(score) {
+        var numericScore = Number(score);
+
+        if (!Number.isFinite(numericScore)) {
+            return 0;
+        }
+
+        if (numericScore < 0) {
+            return 0;
+        }
+
+        if (numericScore > 100) {
+            return 100;
+        }
+
+        return numericScore;
+    }
+
+    function hexToRgb(color) {
+        var hex = String(color || "").replace("#", "");
+        var value = parseInt(hex, 16);
+
+        return {
+            red: (value >> 16) & 255,
+            green: (value >> 8) & 255,
+            blue: value & 255
+        };
+    }
+
+    function componentToHex(value) {
+        var hex = Math.round(value).toString(16);
+        return hex.length === 1 ? "0" + hex : hex;
+    }
+
+    function rgbToHex(color) {
+        return "#" +
+            componentToHex(color.red) +
+            componentToHex(color.green) +
+            componentToHex(color.blue);
+    }
+
+    function interpolateColor(startColor, endColor, ratio) {
+        var start = hexToRgb(startColor);
+        var end = hexToRgb(endColor);
+
+        return rgbToHex({
+            red: start.red + ((end.red - start.red) * ratio),
+            green: start.green + ((end.green - start.green) * ratio),
+            blue: start.blue + ((end.blue - start.blue) * ratio)
+        });
+    }
+
+    function getHeatmapColor(score) {
+        var normalizedScore = clampScore(score);
+        var stopIndex;
+
+        if (normalizedScore <= HEATMAP_COLOR_SCALE[0].score) {
+            return HEATMAP_COLOR_SCALE[0].color;
+        }
+
+        for (stopIndex = 1; stopIndex < HEATMAP_COLOR_SCALE.length; stopIndex += 1) {
+            var startStop = HEATMAP_COLOR_SCALE[stopIndex - 1];
+            var endStop = HEATMAP_COLOR_SCALE[stopIndex];
+
+            if (normalizedScore <= endStop.score) {
+                return interpolateColor(
+                    startStop.color,
+                    endStop.color,
+                    (normalizedScore - startStop.score) / (endStop.score - startStop.score)
+                );
+            }
+        }
+
+        return HEATMAP_COLOR_SCALE[HEATMAP_COLOR_SCALE.length - 1].color;
+    }
+
+    function createElement() {
+        if (tooltipEl) {
+            return;
+        }
+
+        tooltipEl = document.createElement("div");
+        tooltipEl.id = "heatmap-tooltip";
+
+        var title = document.createElement("div");
+        title.className = "hm-tooltip__title";
+
+        var indicator = document.createElement("span");
+        indicator.className = "hm-tooltip__indicator";
+        title.appendChild(indicator);
+
+        var heading = document.createElement("div");
+        heading.className = "hm-tooltip__name";
+        title.appendChild(heading);
+        tooltipEl.appendChild(title);
+
+        var body = document.createElement("div");
+        body.className = "hm-tooltip__body";
+
+        var metrics = [
+            { label: "Engagement Score", valueClass: "hm-tooltip__score" },
+            { label: "Total Institutions", valueClass: "hm-tooltip__total" },
+            { label: "Engaged", valueClass: "hm-tooltip__engaged" },
+            { label: "Non-Engaged", valueClass: "hm-tooltip__non-engaged" },
+            { label: "Latest Year", valueClass: "hm-tooltip__year" }
+        ];
+
+        metrics.forEach(function (metric) {
+            var row = document.createElement("div");
+            row.className = "hm-tooltip__row";
+
+            var label = document.createElement("span");
+            label.className = "hm-tooltip__label";
+            label.textContent = metric.label;
+
+            var value = document.createElement("span");
+            value.className = metric.valueClass;
+
+            row.appendChild(label);
+            row.appendChild(value);
+            body.appendChild(row);
+        });
+
+        tooltipEl.appendChild(body);
+        document.body.appendChild(tooltipEl);
+    }
+
+    function renderContent(stateName, data) {
+        if (!tooltipEl) {
+            return;
+        }
+
+        var currentData = data || {};
+        var latestYear = currentData.latestYear;
+        var engagementScore = Number(currentData.engagementScore) || 0;
+
+        tooltipEl.querySelector(".hm-tooltip__name").textContent = stateName || "";
+        tooltipEl.style.setProperty("--hm-tooltip-accent", getHeatmapColor(engagementScore));
+        tooltipEl.querySelector(".hm-tooltip__score").textContent = engagementScore + "%";
+        tooltipEl.querySelector(".hm-tooltip__total").textContent = Number(currentData.institutions) || 0;
+        tooltipEl.querySelector(".hm-tooltip__engaged").textContent = Number(currentData.engaged) || 0;
+        tooltipEl.querySelector(".hm-tooltip__non-engaged").textContent = Number(currentData.nonEngaged) || 0;
+        tooltipEl.querySelector(".hm-tooltip__year").textContent = (latestYear !== null && latestYear !== undefined)
+            ? latestYear
+            : "\u2014";
+    }
+
+    function initialize() {
+        createElement();
+    }
+
+    function show(stateName, data) {
+        if (!tooltipEl) {
+            return;
+        }
+
+        renderContent(stateName, data);
+        tooltipEl.classList.add("visible");
+    }
+
+    function hide() {
+        if (!tooltipEl) {
+            return;
+        }
+
+        tooltipEl.classList.remove("visible");
+    }
+
+    function move(clientX, clientY) {
+        if (!tooltipEl) {
+            return;
+        }
+
+        var rect = tooltipEl.getBoundingClientRect();
+        var left = clientX + TOOLTIP_OFFSET_X;
+        var top = clientY + TOOLTIP_OFFSET_Y;
+
+        if (left + rect.width + VIEWPORT_MARGIN > window.innerWidth) {
+            left = clientX - rect.width - TOOLTIP_OFFSET_X;
+        }
+
+        if (top + rect.height + VIEWPORT_MARGIN > window.innerHeight) {
+            top = clientY - rect.height - TOOLTIP_OFFSET_Y;
+        }
+
+        if (left < VIEWPORT_MARGIN) {
+            left = VIEWPORT_MARGIN;
+        }
+
+        if (top < VIEWPORT_MARGIN) {
+            top = VIEWPORT_MARGIN;
+        }
+
+        tooltipEl.style.left = left + "px";
+        tooltipEl.style.top = top + "px";
+    }
+
+    function update(stateName, data) {
+        if (!tooltipEl) {
+            return;
+        }
+
+        renderContent(stateName, data);
+    }
+
+    return {
+        initialize: initialize,
+        show: show,
+        hide: hide,
+        move: move,
+        update: update
+    };
+})();
+
+var HEATMAP_DEFAULT_FILL = CHART_COLORS.heatmap.empty || "#111827";
+var HEATMAP_COLOR_SCALE = [
+    { score: 0, color: "#ef4444" },
+    { score: 25, color: "#f97316" },
+    { score: 50, color: "#facc15" },
+    { score: 75, color: "#84cc16" },
+    { score: 100, color: "#22c55e" }
+];
+
+var HeatmapManager = (function () {
+    var container = null;
+    var svg = null;
+    var loadingPromise = null;
+    var statesById = {};
+    var statesByKey = {};
+    var validationReport = createValidationReport(false);
+    var currentTooltipData = {};
+    var tooltipEventsAttached = false;
+
+    function createValidationReport(ready) {
+        return {
+            ready: Boolean(ready),
+            registeredStates: 0,
+            missingStates: [],
+            duplicateIds: [],
+            unexpectedIds: []
+        };
+    }
+
+    function cloneValidationReport(report) {
+        var currentReport = report || createValidationReport(false);
+
+        return {
+            ready: Boolean(currentReport.ready),
+            registeredStates: Number(currentReport.registeredStates) || 0,
+            missingStates: currentReport.missingStates.slice(),
+            duplicateIds: currentReport.duplicateIds.slice(),
+            unexpectedIds: currentReport.unexpectedIds.slice()
+        };
+    }
+
+    function warnValidationIssues(report) {
+        if (!report.ready) {
+            console.warn("[HeatmapManager] Malaysia heatmap SVG is not ready");
+        }
+
+        if (report.missingStates.length) {
+            console.warn("[HeatmapManager] Missing SVG state IDs:", report.missingStates);
+        }
+
+        if (report.duplicateIds.length) {
+            console.warn("[HeatmapManager] Duplicate SVG state IDs:", report.duplicateIds);
+        }
+
+        if (report.unexpectedIds.length) {
+            console.warn("[HeatmapManager] Unexpected SVG state IDs:", report.unexpectedIds);
+        }
+    }
+
+    function loadSvg() {
+        container = document.getElementById(HEATMAP_CONTAINER_ID);
+
+        if (!container) {
+            return Promise.reject(new Error("Heatmap container not found: #" + HEATMAP_CONTAINER_ID));
+        }
+
+        if (svg) {
+            return Promise.resolve(svg);
+        }
+
+        if (typeof fetch !== "function") {
+            return Promise.reject(new Error("fetch() is unavailable for heatmap SVG loading"));
+        }
+
+        return fetch(HEATMAP_SVG_SOURCE)
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error("Malaysia SVG request failed with status " + response.status);
+                }
+
+                return response.text();
+            })
+            .then(function (svgText) {
+                var parser = new DOMParser();
+                var parsedDocument = parser.parseFromString(svgText, "image/svg+xml");
+                var parsedSvg = parsedDocument.querySelector("svg");
+
+                if (!parsedSvg || parsedDocument.querySelector("parsererror")) {
+                    throw new Error("Malaysia SVG could not be parsed");
+                }
+
+                container.textContent = "";
+                container.appendChild(document.importNode(parsedSvg, true));
+                svg = container.querySelector("svg");
+
+                return svg;
+            });
+    }
+
+    function registerStates() {
+        statesById = {};
+        statesByKey = {};
+
+        if (!svg) {
+            return;
+        }
+
+        var stateElements = svg.querySelectorAll("#features path[id]");
+
+        Array.prototype.forEach.call(stateElements, function (stateElement) {
+            statesById[stateElement.id] = stateElement;
+        });
+
+        Object.keys(HEATMAP_STATE_REGISTRY).forEach(function (stateKey) {
+            var svgId = HEATMAP_STATE_REGISTRY[stateKey];
+
+            if (statesById[svgId]) {
+                statesByKey[stateKey] = statesById[svgId];
+            }
+        });
+    }
+
+    function getDuplicateIds() {
+        var counts = {};
+        var duplicates = [];
+
+        if (!svg) {
+            return duplicates;
+        }
+
+        Array.prototype.forEach.call(svg.querySelectorAll("[id]"), function (element) {
+            counts[element.id] = (counts[element.id] || 0) + 1;
+        });
+
+        Object.keys(counts).forEach(function (id) {
+            if (counts[id] > 1) {
+                duplicates.push(id);
+            }
+        });
+
+        return duplicates;
+    }
+
+    function validate() {
+        var expectedIds = Object.keys(HEATMAP_STATE_REGISTRY).map(function (stateKey) {
+            return HEATMAP_STATE_REGISTRY[stateKey];
+        });
+        var actualIds = Object.keys(statesById);
+        var report = createValidationReport(Boolean(svg));
+
+        report.registeredStates = Object.keys(statesByKey).length;
+        report.duplicateIds = getDuplicateIds();
+        report.missingStates = expectedIds.filter(function (svgId) {
+            return !Object.prototype.hasOwnProperty.call(statesById, svgId);
+        });
+        report.unexpectedIds = actualIds.filter(function (svgId) {
+            return expectedIds.indexOf(svgId) === -1;
+        });
+        report.ready = Boolean(svg) && !report.missingStates.length && !report.duplicateIds.length;
+
+        validationReport = report;
+        warnValidationIssues(validationReport);
+
+        return getValidationReport();
+    }
+
+    function initialize() {
+        if (svg) {
+            registerStates();
+            return Promise.resolve(validate());
+        }
+
+        if (loadingPromise) {
+            return loadingPromise;
+        }
+
+        loadingPromise = loadSvg()
+            .then(function () {
+                registerStates();
+                return validate();
+            })
+            .catch(function (err) {
+                validationReport = createValidationReport(false);
+                loadingPromise = null;
+                console.warn("[HeatmapManager] Failed to initialize Malaysia heatmap:", err);
+                return getValidationReport();
+            });
+
+        return loadingPromise;
+    }
+
+    function getState(id) {
+        return statesById[id] || null;
+    }
+
+    function getStateByKey(key) {
+        return statesByKey[key] || null;
+    }
+
+    function getAllStates() {
+        return Object.keys(statesById).map(function (id) {
+            return statesById[id];
+        });
+    }
+
+    function isReady() {
+        return validationReport.ready;
+    }
+
+    function getValidationReport() {
+        return cloneValidationReport(validationReport);
+    }
+
+    function clampScore(score) {
+        var numericScore = Number(score);
+
+        if (!Number.isFinite(numericScore)) {
+            return 0;
+        }
+
+        if (numericScore < 0) {
+            return 0;
+        }
+
+        if (numericScore > 100) {
+            return 100;
+        }
+
+        return numericScore;
+    }
+
+    function hexToRgb(color) {
+        var hex = String(color || "").replace("#", "");
+        var value = parseInt(hex, 16);
+
+        return {
+            red: (value >> 16) & 255,
+            green: (value >> 8) & 255,
+            blue: value & 255
+        };
+    }
+
+    function componentToHex(value) {
+        var hex = Math.round(value).toString(16);
+        return hex.length === 1 ? "0" + hex : hex;
+    }
+
+    function rgbToHex(color) {
+        return "#" +
+            componentToHex(color.red) +
+            componentToHex(color.green) +
+            componentToHex(color.blue);
+    }
+
+    function interpolateColor(startColor, endColor, ratio) {
+        var start = hexToRgb(startColor);
+        var end = hexToRgb(endColor);
+
+        return rgbToHex({
+            red: start.red + ((end.red - start.red) * ratio),
+            green: start.green + ((end.green - start.green) * ratio),
+            blue: start.blue + ((end.blue - start.blue) * ratio)
+        });
+    }
+
+    function interpolateHeatmapColor(score) {
+        var normalizedScore = clampScore(score);
+        var lastStop = HEATMAP_COLOR_SCALE[HEATMAP_COLOR_SCALE.length - 1];
+        var stopIndex;
+
+        if (normalizedScore <= HEATMAP_COLOR_SCALE[0].score) {
+            return HEATMAP_COLOR_SCALE[0].color;
+        }
+
+        for (stopIndex = 1; stopIndex < HEATMAP_COLOR_SCALE.length; stopIndex += 1) {
+            var startStop = HEATMAP_COLOR_SCALE[stopIndex - 1];
+            var endStop = HEATMAP_COLOR_SCALE[stopIndex];
+
+            if (normalizedScore <= endStop.score) {
+                return interpolateColor(
+                    startStop.color,
+                    endStop.color,
+                    (normalizedScore - startStop.score) / (endStop.score - startStop.score)
+                );
+            }
+        }
+
+        return lastStop.color;
+    }
+
+    function getHeatmapColor(score) {
+        return interpolateHeatmapColor(score);
+    }
+
+    function paintState(stateName, color) {
+        var stateElement = getStateByKey(stateName) || getState(HEATMAP_STATE_REGISTRY[stateName]);
+
+        if (!stateElement) {
+            return false;
+        }
+
+        stateElement.setAttribute("fill", color);
+        stateElement.style.fill = color;
+
+        return true;
+    }
+
+    function resetStateColors() {
+        Object.keys(HEATMAP_STATE_REGISTRY).forEach(function (stateName) {
+            paintState(stateName, HEATMAP_DEFAULT_FILL);
+        });
+    }
+
+    function getStateScore(stateAnalytics) {
+        var analytics = stateAnalytics || {};
+
+        if (Object.prototype.hasOwnProperty.call(analytics, "score")) {
+            return analytics.score;
+        }
+
+        return analytics.engagementScore;
+    }
+
+    function paintAllStates(analytics) {
+        var heatmapAnalytics = analytics || {};
+
+        resetStateColors();
+
+        Object.keys(HEATMAP_STATE_REGISTRY).forEach(function (stateName) {
+            var stateAnalytics = heatmapAnalytics[stateName];
+
+            if (!stateAnalytics) {
+                return;
+            }
+
+            paintState(stateName, getHeatmapColor(getStateScore(stateAnalytics)));
+        });
+    }
+
+    function buildReverseRegistry() {
+        var reverseMap = {};
+
+        Object.keys(HEATMAP_STATE_REGISTRY).forEach(function (stateKey) {
+            reverseMap[HEATMAP_STATE_REGISTRY[stateKey]] = stateKey;
+        });
+
+        return reverseMap;
+    }
+
+    function resolveStateFromTarget(target, reverseMap) {
+        var el = target;
+
+        while (el && el !== svg) {
+            if (el.id && Object.prototype.hasOwnProperty.call(reverseMap, el.id)) {
+                return reverseMap[el.id];
+            }
+
+            el = el.parentElement;
+        }
+
+        return null;
+    }
+
+    function registerTooltipEvents(analytics) {
+        currentTooltipData = analytics || {};
+
+        if (!svg || tooltipEventsAttached) {
+            return;
+        }
+
+        var features = svg.querySelector("#features");
+
+        if (!features) {
+            return;
+        }
+
+        var reverseMap = buildReverseRegistry();
+
+        features.addEventListener("mousemove", function (event) {
+            var stateKey = resolveStateFromTarget(event.target, reverseMap);
+
+            if (stateKey && currentTooltipData[stateKey]) {
+                HeatmapTooltip.show(stateKey, currentTooltipData[stateKey]);
+                HeatmapTooltip.move(event.clientX, event.clientY);
+            } else {
+                HeatmapTooltip.hide();
+            }
+        });
+
+        features.addEventListener("mouseleave", function () {
+            HeatmapTooltip.hide();
+        });
+
+        tooltipEventsAttached = true;
+    }
+
+    return {
+        initialize: initialize,
+        validate: validate,
+        getState: getState,
+        getStateByKey: getStateByKey,
+        getAllStates: getAllStates,
+        isReady: isReady,
+        getValidationReport: getValidationReport,
+        paintState: paintState,
+        paintAllStates: paintAllStates,
+        getHeatmapColor: getHeatmapColor,
+        resetStateColors: resetStateColors,
+        registerTooltipEvents: registerTooltipEvents
+    };
+})();
+
+var renderHeatmapRequestId = 0;
 
 function renderHeatmap() {
-    // Intentionally left unimplemented for Sprint 3.8
+    var requestId = renderHeatmapRequestId + 1;
+    var analytics = Aggregation.buildDashboardData(dashboardState.searchedData || []);
+
+    renderHeatmapRequestId = requestId;
+
+    HeatmapManager.initialize().then(function () {
+        if (requestId !== renderHeatmapRequestId) {
+            return;
+        }
+
+        HeatmapManager.paintAllStates(analytics.heatmap);
+        HeatmapManager.registerTooltipEvents(analytics.heatmap);
+    });
 }
 
 function populateKpi() {
