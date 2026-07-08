@@ -297,17 +297,17 @@ function calculateTotalPages(recordCount, pageSize) {
 }
 
 function renderDashboard() {
-    populateKpi();
-    populateDirectory();
+    populateKpiWithFade();
+    populateDirectoryWithEmptyState();
     populateFilters();
     populateMetadata();
 
     // Chart rendering hook (placeholder charts for Sprint 3.8)
-    if (typeof renderCharts === "function") {
+    if (typeof renderChartsWithFade === "function") {
         try {
-            renderCharts();
+            renderChartsWithFade();
         } catch (err) {
-            console.warn("[Dashboard] renderCharts failed:", err);
+            console.warn("[Dashboard] renderChartsWithFade failed:", err);
         }
     }
 
@@ -1833,6 +1833,30 @@ var Aggregation = (function () {
    FUTURE CHART RENDERERS / HOOKS
    ======================================================= */
 
+function renderChartsWithFade() {
+    var chartContainers = document.querySelectorAll(".chart-container");
+    var fadeOutTime = 150; // Time to fade out
+    var fadeInTime = 150; // Time to fade in
+    var updateTime = 50; // Time for chart update
+
+    // Fade out all charts
+    chartContainers.forEach(function (container) {
+        container.style.opacity = "0.3";
+    });
+
+    // Wait for fade out, then update charts
+    setTimeout(function () {
+        renderCharts();
+
+        // Fade back in
+        setTimeout(function () {
+            chartContainers.forEach(function (container) {
+                container.style.opacity = "1";
+            });
+        }, updateTime);
+    }, fadeOutTime);
+}
+
 function renderCharts() {
     try {
         var analytics = Aggregation.buildDashboardData(dashboardState.searchedData || []);
@@ -2492,6 +2516,24 @@ var HeatmapManager = (function () {
             HeatmapTooltip.hide();
         });
 
+        // Click handler: toggle state filter
+        features.addEventListener("click", function (event) {
+            var stateKey = resolveStateFromTarget(event.target, reverseMap);
+
+            if (!stateKey) {
+                return;  // Not a state element
+            }
+
+            // Toggle logic: if clicked state == current filter, turn OFF ("All"); else turn ON (state)
+            var currentState = dashboardState.filters.state;
+            var newState = (stateKey === currentState) ? "All" : stateKey;
+
+            // Use existing filter mechanism
+            updateFilterState("state", newState);
+            runDashboardPipeline();
+            renderDashboard();
+        });
+
         tooltipEventsAttached = true;
     }
 
@@ -2511,6 +2553,29 @@ var HeatmapManager = (function () {
     };
 })();
 
+function applyStateSelection() {
+    var selectedState = dashboardState.filters.state;
+    var svg = document.querySelector("#malaysia-heatmap svg");
+
+    if (!svg) {
+        return;
+    }
+
+    // Remove selection class from all states
+    var allElements = svg.querySelectorAll("#features path, #features g");
+    allElements.forEach(function (el) {
+        el.classList.remove("state-selected");
+    });
+
+    // Add selection class if not "All"
+    if (selectedState && selectedState !== "All") {
+        var stateElement = HeatmapManager.getStateByKey(selectedState);
+        if (stateElement) {
+            stateElement.classList.add("state-selected");
+        }
+    }
+}
+
 var renderHeatmapRequestId = 0;
 
 function renderHeatmap() {
@@ -2526,7 +2591,31 @@ function renderHeatmap() {
 
         HeatmapManager.paintAllStates(analytics.heatmap);
         HeatmapManager.registerTooltipEvents(analytics.heatmap);
+        applyStateSelection();  // Apply visual selection based on current filter
     });
+}
+
+function populateKpiWithFade() {
+    var kpiCards = document.querySelectorAll(".kpi-card");
+    var fadeTime = 200; // Time to fade out
+    var updateTime = 50; // Time for DOM update
+
+    // Add updating state and fade out
+    kpiCards.forEach(function (card) {
+        card.classList.add("updating");
+    });
+
+    // Wait for fade out, then update values
+    setTimeout(function () {
+        populateKpi();
+
+        // Fade back in
+        setTimeout(function () {
+            kpiCards.forEach(function (card) {
+                card.classList.remove("updating");
+            });
+        }, updateTime);
+    }, fadeTime);
 }
 
 function populateKpi() {
@@ -2565,8 +2654,25 @@ function populateKpi() {
     console.log("[Dashboard] KPI populated");
 }
 
-function populateDirectory() {
+function populateDirectoryWithEmptyState() {
     if (!DOM.directoryTableBody) {
+        return;
+    }
+
+    // Check if there are records
+    if (!dashboardState.visibleData || dashboardState.visibleData.length === 0) {
+        // Show empty state
+        var emptyMessage = document.createElement("tr");
+        var emptyCell = document.createElement("td");
+        emptyCell.setAttribute("colspan", "6");
+        emptyCell.className = "empty-state-message";
+        emptyCell.textContent = "No institutions match your selected filters. Try adjusting your criteria.";
+        emptyMessage.appendChild(emptyCell);
+        
+        DOM.directoryTableBody.textContent = "";
+        DOM.directoryTableBody.appendChild(emptyMessage);
+        
+        console.log("[Dashboard] Empty state displayed");
         return;
     }
 
@@ -2580,6 +2686,10 @@ function populateDirectory() {
     DOM.directoryTableBody.appendChild(fragment);
 
     console.log("[Dashboard] Directory populated");
+}
+
+function populateDirectory() {
+    populateDirectoryWithEmptyState();
 }
 
 function populateFilters() {
