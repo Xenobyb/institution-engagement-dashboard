@@ -1,4 +1,13 @@
 var dashboardState = {
+    // Raw datasets (independent collections, dual SSOT)
+    institutionsData: [],      // Full array from Institutions_Master_SSOT.csv
+    engagementData: [],        // Full array from Engagement_Records_SSOT.csv
+    
+    // Lookup maps for O(1) access (separate, not merged)
+    institutionMap: new Map(), // Institution → {category, region, state}
+    engagementMap: new Map(),  // Institution → {engaged2024, ..., latestEngagementYear}
+    
+    // Legacy state (kept for backward compatibility)
     rawData: [],
     filteredData: [],
     searchedData: [],
@@ -18,6 +27,7 @@ var dashboardState = {
     metadata: {
         lastUpdated: null,
         dataSource: CONFIG.DATA_SOURCE,
+        engagementDataSource: CONFIG.ENGAGEMENT_DATA_SOURCE,
         version: CONFIG.VERSION
     }
 };
@@ -70,22 +80,163 @@ function getUniqueValues(data, field) {
     return Array.from(values);
 }
 
-function loadCsvData() {
-    console.log("[Dashboard] Loading CSV...");
+// PHASE 1: Dual Data Loading (Two-Map Architecture)
+// Load institutions master file (static reference data)
+function loadInstitutionsData() {
+    console.log("[Data Loading] Loading Institutions Master...");
 
     return fetch(CONFIG.DATA_SOURCE)
         .then(function (response) {
             if (!response.ok) {
-                throw new Error("CSV request failed with status " + response.status);
+                throw new Error("Institutions CSV request failed with status " + response.status);
             }
-
             return response.text();
         })
         .then(function (csvText) {
             var data = parseCsv(csvText);
-            console.log("[Dashboard] CSV loaded (" + data.length + " records)");
+            console.log("[Data Loading] Institutions Master loaded (" + data.length + " records)");
             return data;
         });
+}
+
+// Load engagement records file (transactional engagement data)
+function loadEngagementData() {
+    console.log("[Data Loading] Loading Engagement Records...");
+
+    return fetch(CONFIG.ENGAGEMENT_DATA_SOURCE)
+        .then(function (response) {
+            if (!response.ok) {
+                throw new Error("Engagement CSV request failed with status " + response.status);
+            }
+            return response.text();
+        })
+        .then(function (csvText) {
+            var data = parseCsv(csvText);
+            console.log("[Data Loading] Engagement Records loaded (" + data.length + " records)");
+            return data;
+        });
+}
+
+// Legacy function for backward compatibility
+function loadCsvData() {
+    return loadInstitutionsData();
+}
+
+// PHASE 2: Map Builders (Two-Map Architecture)
+// Build Institution Map: Institution → {category, region, state}
+function buildInstitutionMap(institutionsData) {
+    console.log("[Map] Building Institution Map...");
+    
+    var map = new Map();
+    
+    institutionsData.forEach(function (record) {
+        var institutionName = String(record.Institution || "").trim();
+        
+        if (!institutionName) {
+            return; // Skip invalid records
+        }
+        
+        map.set(institutionName, {
+            category: String(record.Category || "").trim(),
+            region: String(record.Region || "").trim(),
+            state: String(record.State || "").trim()
+        });
+    });
+    
+    console.log("[Map] Institution Map built: " + map.size + " entries");
+    return map;
+}
+
+// Build Engagement Map: Institution → {engaged2024, ..., latestEngagementYear}
+function buildEngagementMap(engagementData) {
+    console.log("[Map] Building Engagement Map...");
+    
+    var map = new Map();
+    
+    engagementData.forEach(function (record) {
+        var institutionName = String(record.Institution || "").trim();
+        
+        if (!institutionName) {
+            return; // Skip invalid records
+        }
+        
+        map.set(institutionName, {
+            engaged2024: String(record.Engaged2024 || "").trim(),
+            engaged2025: String(record.Engaged2025 || "").trim(),
+            engaged2026: String(record.Engaged2026 || "").trim(),
+            everEngaged: String(record.EverEngaged || "").trim(),
+            latestEngagementYear: String(record.LatestEngagementYear || "").trim()
+        });
+    });
+    
+    console.log("[Map] Engagement Map built: " + map.size + " entries");
+    return map;
+}
+
+// Data Layer Coordinator: Load both datasets and build maps
+function initializeDataLayer() {
+    console.log("[Data Layer] Initializing dual SSOT architecture...");
+    
+    // Load both CSV files in parallel
+    return Promise.all([
+        loadInstitutionsData(),
+        loadEngagementData()
+    ])
+    .then(function (results) {
+        var institutionsData = results[0];
+        var engagementData = results[1];
+        
+        // Validate both datasets
+        var validatedInstitutions = validateInstitutionsData(institutionsData);
+        var validatedEngagement = validateEngagementData(engagementData);
+        
+        // Store raw datasets in state
+        dashboardState.institutionsData = validatedInstitutions;
+        dashboardState.engagementData = validatedEngagement;
+        
+        // Build lookup maps
+        dashboardState.institutionMap = buildInstitutionMap(validatedInstitutions);
+        dashboardState.engagementMap = buildEngagementMap(validatedEngagement);
+        
+        // For backward compatibility, populate rawData with institutions
+        dashboardState.rawData = validatedInstitutions;
+        
+        // Initialize dashboard state and UI
+        initializeState(validatedInstitutions);
+        attachPaginationEvents();
+        renderDashboard();
+        
+        console.log("[Data Layer] Initialization complete");
+    });
+}
+
+// PHASE 2: Query Helper Functions (for SQL-like joins)
+// Get institution metadata from institutionMap
+function getInstitutionMetadata(institutionName) {
+    return dashboardState.institutionMap.get(institutionName);
+}
+
+// Get engagement data from engagementMap
+function getEngagementData(institutionName) {
+    return dashboardState.engagementMap.get(institutionName);
+}
+
+// Get engagement status for a specific year (2024, 2025, 2026)
+function getEngagementForYear(institutionName, year) {
+    var engagement = getEngagementData(institutionName);
+    if (!engagement) {
+        return false; // No engagement record found
+    }
+    
+    var engagementField = 'engaged' + year;
+    var value = engagement[engagementField];
+    
+    return isTrue(value);
+}
+
+// Check if institution is engaged in a specific year (helper)
+function isInstitutionEngagedInYear(institutionName, year) {
+    return getEngagementForYear(institutionName, year);
 }
 
 function parseCsv(csvText) {
@@ -166,21 +317,16 @@ function initializeDashboard() {
         }
     }
 
-    loadCsvData()
-        .then(function (data) {
-            var validatedData = validateData(data);
-            initializeState(validatedData);
-            attachPaginationEvents();
-            renderDashboard();
-        })
+    initializeDataLayer()
         .catch(function (error) {
-            console.error("[Dashboard] CSV loading failed. Existing placeholders remain visible.", error);
+            console.error("[Data Layer] Initialization failed. Existing placeholders remain visible.", error);
         });
 }
 
-function validateData(data) {
+// Validate Institutions Master data
+function validateInstitutionsData(data) {
     var records = Array.isArray(data) ? data : [];
-    var requiredColumns = CONFIG.REQUIRED_COLUMNS || [];
+    var requiredColumns = CONFIG.REQUIRED_COLUMNS_MASTER || [];
     var fieldNames = CONFIG.FIELD_NAMES || {};
     var missingColumns = [];
     var firstRecord = records[0] || {};
@@ -192,26 +338,43 @@ function validateData(data) {
     });
 
     if (missingColumns.length) {
-        console.warn("[Dashboard] Missing required CSV columns:", missingColumns.join(", "));
+        console.warn("[Validation] Institutions Master - Missing required columns:", missingColumns.join(", "));
     }
 
     records.forEach(function (record, recordIndex) {
         var rowNumber = recordIndex + 2;
 
-        requiredColumns.forEach(function (columnName) {
-            if (!Object.prototype.hasOwnProperty.call(record, columnName)) {
-                return;
-            }
-
-            if (!String(record[columnName] || "").trim()) {
-                console.warn("[Dashboard] Missing required field value in row " + rowNumber + ": " + columnName);
-            }
-        });
-
         warnIfEmptyField(record, rowNumber, fieldNames.INSTITUTION, "Empty Institution name");
         warnIfEmptyField(record, rowNumber, fieldNames.CATEGORY, "Empty Category");
         warnIfEmptyField(record, rowNumber, fieldNames.REGION, "Empty Region");
         warnIfEmptyField(record, rowNumber, fieldNames.STATE, "Empty State");
+    });
+
+    return data;
+}
+
+// Validate Engagement Records data
+function validateEngagementData(data) {
+    var records = Array.isArray(data) ? data : [];
+    var requiredColumns = CONFIG.REQUIRED_COLUMNS_ENGAGEMENT || [];
+    var fieldNames = CONFIG.FIELD_NAMES || {};
+    var missingColumns = [];
+    var firstRecord = records[0] || {};
+
+    requiredColumns.forEach(function (columnName) {
+        if (!Object.prototype.hasOwnProperty.call(firstRecord, columnName)) {
+            missingColumns.push(columnName);
+        }
+    });
+
+    if (missingColumns.length) {
+        console.warn("[Validation] Engagement Records - Missing required columns:", missingColumns.join(", "));
+    }
+
+    records.forEach(function (record, recordIndex) {
+        var rowNumber = recordIndex + 2;
+
+        warnIfEmptyField(record, rowNumber, fieldNames.INSTITUTION, "Empty Institution name");
         warnIfEmptyField(record, rowNumber, fieldNames.LATEST_ENGAGEMENT_YEAR, "Missing Latest Engagement Year");
         validateEverEngagedValue(record, rowNumber, fieldNames.EVER_ENGAGED);
         validateLatestEngagementYear(record, rowNumber, fieldNames.LATEST_ENGAGEMENT_YEAR);
@@ -399,30 +562,84 @@ function updateSearchState(query) {
     dashboardState.searchQuery = String(query || "");
 }
 
-function applyFilters() {
-    var filters = dashboardState.filters;
-    var filterFields = {
-        year: "LatestEngagementYear",
-        category: "Category",
-        region: "Region",
-        state: "State"
-    };
-
-    console.log("[Dashboard] Applying filters");
-
-    dashboardState.filteredData = dashboardState.rawData.filter(function (record) {
-        return Object.keys(filterFields).every(function (filterName) {
-            var filterValue = filters[filterName];
-
-            if (filterValue === CONFIG.DEFAULT_FILTER_VALUE) {
-                return true;
+// PHASE 3: Year-Independent Filtering (Two-Map Architecture)
+// Calculate baseline institutions: filtered by Region/State/Category ONLY (NO Year)
+function calculateBaselineInstitutions(filters) {
+    var baselineNames = [];
+    
+    // Iterate through institutionMap, apply dimensional filters
+    for (var institutionName of dashboardState.institutionMap.keys()) {
+        var metadata = dashboardState.institutionMap.get(institutionName);
+        
+        // Apply Region filter
+        if (filters.region !== CONFIG.DEFAULT_FILTER_VALUE) {
+            if (metadata.region !== filters.region) {
+                continue; // Skip if region doesn't match
             }
+        }
+        
+        // Apply State filter
+        if (filters.state !== CONFIG.DEFAULT_FILTER_VALUE) {
+            if (metadata.state !== filters.state) {
+                continue; // Skip if state doesn't match
+            }
+        }
+        
+        // Apply Category filter
+        if (filters.category !== CONFIG.DEFAULT_FILTER_VALUE) {
+            if (metadata.category !== filters.category) {
+                continue; // Skip if category doesn't match
+            }
+        }
+        
+        baselineNames.push(institutionName);
+    }
+    
+    return baselineNames;
+}
 
-            return String(record[filterFields[filterName]] || "").trim() === filterValue;
-        });
+// Filter institutions by engagement in a specific year
+function filterByEngagementYear(institutionNames, year) {
+    if (year === CONFIG.DEFAULT_FILTER_VALUE) {
+        return institutionNames; // No year filter applied
+    }
+    
+    return institutionNames.filter(function (name) {
+        return isInstitutionEngagedInYear(name, year);
     });
+}
 
-    console.log("[Dashboard] Filtered records: " + dashboardState.filteredData.length);
+// Legacy applyFilters - updated to use new architecture
+function applyFilters() {
+    console.log("[Filtering] Applying dimension and engagement filters");
+    
+    var filters = dashboardState.filters;
+    
+    // Step 1: Get baseline institutions (Region, State, Category only - NO Year)
+    var baselineNames = calculateBaselineInstitutions(filters);
+    
+    // Step 2: Convert institution names back to full records for backward compatibility
+    // We need to build rawData with engagement information
+    var baselineRecords = baselineNames.map(function (name) {
+        // Create a combined record for backward compatibility
+        var metadata = dashboardState.institutionMap.get(name);
+        var engagement = dashboardState.engagementMap.get(name);
+        
+        return {
+            Institution: name,
+            Category: metadata.category,
+            Region: metadata.region,
+            State: metadata.state,
+            Engaged2024: engagement ? engagement.engaged2024 : "",
+            Engaged2025: engagement ? engagement.engaged2025 : "",
+            Engaged2026: engagement ? engagement.engaged2026 : "",
+            EverEngaged: engagement ? engagement.everEngaged : "FALSE",
+            LatestEngagementYear: engagement ? engagement.latestEngagementYear : CONFIG.NO_ENGAGEMENT_YEAR_VALUE
+        };
+    });
+    
+    dashboardState.filteredData = baselineRecords;
+    console.log("[Filtering] Baseline records (dimension-filtered): " + dashboardState.filteredData.length);
 }
 
 function updateVisibleData() {
@@ -1568,6 +1785,75 @@ function calculateHeatmapScore(year) {
     return HEATMAP_SCORE_MODEL[numericYear];
 }
 
+// PHASE 5: Calculate Heatmap Data for ALL States (Using Two-Map Architecture)
+// This function returns engagement scores for ALL Malaysian states, using baseline institutions
+function calculateAllStatesHeatmapData() {
+    var baselineNames = calculateBaselineInstitutions(dashboardState.filters);
+    var selectedYear = dashboardState.filters.year;
+    var summary = {};
+    
+    // Get all unique states from institutionMap (baseline - all institutions)
+    var allStates = new Set();
+    for (var metadata of dashboardState.institutionMap.values()) {
+        allStates.add(metadata.state);
+    }
+    
+    // Initialize summary for ALL states with zero values
+    allStates.forEach(function (state) {
+        summary[state] = {
+            totalScore: 0,
+            institutions: 0,
+            latestYear: null,
+            engaged: 0
+        };
+    });
+    
+    // Aggregate engagement data for baseline institutions only
+    baselineNames.forEach(function (institutionName) {
+        var metadata = dashboardState.institutionMap.get(institutionName);
+        var engagement = dashboardState.engagementMap.get(institutionName);
+        var state = metadata.state;
+        
+        summary[state].institutions += 1;
+        
+        if (engagement) {
+            summary[state].totalScore += calculateHeatmapScore(engagement.latestEngagementYear);
+            
+            if (isTrue(engagement.everEngaged)) {
+                summary[state].engaged += 1;
+            }
+            
+            var latestYearNum = Number(engagement.latestEngagementYear);
+            if (Number.isInteger(latestYearNum) && 
+                (summary[state].latestYear === null || latestYearNum > summary[state].latestYear)) {
+                summary[state].latestYear = latestYearNum;
+            }
+        }
+    });
+    
+    // Calculate final engagement scores
+    var finalSummary = {};
+    Object.keys(summary).forEach(function (state) {
+        var stateSummary = summary[state];
+        var engagementScore = stateSummary.institutions
+            ? Math.round(stateSummary.totalScore / stateSummary.institutions)
+            : 0;
+        
+        finalSummary[state] = {
+            engagementScore: engagementScore,
+            score: engagementScore,
+            institutions: stateSummary.institutions,
+            latestYear: stateSummary.latestYear,
+            engaged: stateSummary.engaged,
+            nonEngaged: stateSummary.institutions - stateSummary.engaged,
+            rank: null,
+            color: null
+        };
+    });
+    
+    return finalSummary;
+}
+
 var Aggregation = (function () {
     function normalizeRecords(data) {
         return Array.isArray(data) ? data : [];
@@ -1804,8 +2090,11 @@ var Aggregation = (function () {
 
     /**
      * Aggregation.buildDashboardData()
-     * Input: searchedData
+     * Input: searchedData (for region, category, trend, coverage, topStates)
      * Output: analytics snapshot containing all aggregation datasets
+     * 
+     * NOTE: Heatmap now uses map-based calculation to include ALL states,
+     * regardless of filters. This ensures complete state coverage in the heatmap.
      */
     function buildDashboardData(data) {
         return {
@@ -1814,7 +2103,7 @@ var Aggregation = (function () {
             trend: trend(data),
             coverage: coverage(data),
             topStates: topStates(data),
-            heatmap: heatmap(data)
+            heatmap: calculateAllStatesHeatmapData()  // Uses maps directly, ignores data parameter
         };
     }
 
@@ -2458,7 +2747,12 @@ var HeatmapManager = (function () {
                 return;
             }
 
-            paintState(stateName, getHeatmapColor(getStateScore(stateAnalytics)));
+            // Render-time decision: no institutions → grey, otherwise → color scale
+            var color = stateAnalytics.institutions === 0
+                ? HEATMAP_DEFAULT_FILL
+                : getHeatmapColor(getStateScore(stateAnalytics));
+
+            paintState(stateName, color);
         });
     }
 
@@ -2618,18 +2912,44 @@ function populateKpiWithFade() {
     }, fadeTime);
 }
 
+// PHASE 4: Year-Independent KPI Calculations (Two-Map Architecture)
 function populateKpi() {
-    var data = dashboardState.searchedData;
-    var total = data.length;
-    var engaged = data.filter(function (record) {
-        return isTrue(record.EverEngaged);
-    }).length;
+    // Get baseline institutions (filtered by Region/State/Category ONLY - NO Year)
+    var baselineNames = calculateBaselineInstitutions(dashboardState.filters);
+    var total = baselineNames.length;  // Year-independent!
+    
+    // Get institutions engaged in the selected year
+    var selectedYear = dashboardState.filters.year;
+    var engagedNames = [];
+    
+    if (selectedYear === CONFIG.DEFAULT_FILTER_VALUE) {
+        // If "All" years selected, use EverEngaged
+        engagedNames = baselineNames.filter(function (name) {
+            var engagement = dashboardState.engagementMap.get(name);
+            return engagement && isTrue(engagement.everEngaged);
+        });
+    } else {
+        // If specific year selected, check engagement for that year
+        engagedNames = baselineNames.filter(function (name) {
+            return isInstitutionEngagedInYear(name, selectedYear);
+        });
+    }
+    
+    var engaged = engagedNames.length;
     var nonEngaged = total - engaged;
-    var latestYear = getLatestNumericYear(data);
-    var recentlyEngaged = data.filter(function (record) {
-        return Number(record.LatestEngagementYear) === latestYear;
-    }).length;
     var engagementRate = total ? ((engaged / total) * 100).toFixed(2) + "%" : "0.00%";
+    
+    // Calculate Recently Engaged (count where LatestEngagementYear === selected year)
+    var recentlyEngaged = 0;
+    if (selectedYear !== CONFIG.DEFAULT_FILTER_VALUE) {
+        recentlyEngaged = baselineNames.filter(function (name) {
+            var engagement = dashboardState.engagementMap.get(name);
+            return engagement && String(engagement.latestEngagementYear).trim() === String(selectedYear);
+        }).length;
+    } else {
+        // If "All" years selected, count institutions with any engagement
+        recentlyEngaged = engagedNames.length;
+    }
 
     if (DOM.totalInstitutions) {
         DOM.totalInstitutions.textContent = total.toLocaleString();
@@ -2651,7 +2971,7 @@ function populateKpi() {
         DOM.recentlyEngaged.textContent = recentlyEngaged.toLocaleString();
     }
 
-    console.log("[Dashboard] KPI populated");
+    console.log("[KPI] Populated - Total: " + total + ", Engaged: " + engaged + ", Rate: " + engagementRate);
 }
 
 function populateDirectoryWithEmptyState() {
@@ -2693,10 +3013,13 @@ function populateDirectory() {
 }
 
 function populateFilters() {
-    setFilterOptions(DOM.yearFilter, getUniqueValues(dashboardState.rawData, "LatestEngagementYear").sort(sortYearValues), dashboardState.filters.year);
-    setFilterOptions(DOM.categoryFilter, getUniqueValues(dashboardState.rawData, "Category").sort(sortTextValues), dashboardState.filters.category);
-    setFilterOptions(DOM.regionFilter, getUniqueValues(dashboardState.rawData, "Region").sort(sortTextValues), dashboardState.filters.region);
-    setFilterOptions(DOM.stateFilter, getUniqueValues(dashboardState.rawData, "State").sort(sortTextValues), dashboardState.filters.state);
+    // Year values come from engagementData (LatestEngagementYear field)
+    setFilterOptions(DOM.yearFilter, getUniqueValues(dashboardState.engagementData, "LatestEngagementYear").sort(sortYearValues), dashboardState.filters.year);
+    
+    // Other dimensions come from institutionsData
+    setFilterOptions(DOM.categoryFilter, getUniqueValues(dashboardState.institutionsData, "Category").sort(sortTextValues), dashboardState.filters.category);
+    setFilterOptions(DOM.regionFilter, getUniqueValues(dashboardState.institutionsData, "Region").sort(sortTextValues), dashboardState.filters.region);
+    setFilterOptions(DOM.stateFilter, getUniqueValues(dashboardState.institutionsData, "State").sort(sortTextValues), dashboardState.filters.state);
 
     console.log("[Dashboard] Filters initialized");
 }
