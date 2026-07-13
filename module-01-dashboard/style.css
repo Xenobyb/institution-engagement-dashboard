@@ -5,7 +5,6 @@
 }
 
 :root {
-    --sidebar-width: 290px;
     --content-max-width: 1800px;
     --section-gap: 20px;
     --card-gap: 20px;
@@ -112,173 +111,6 @@ input:focus-visible,
 select:focus-visible {
     outline: none;
     box-shadow: var(--focus-ring);
-}
-
-#app-layout {
-    position: relative;
-    z-index: var(--z-base);
-    display: grid;
-    grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
-    min-height: 100vh;
-}
-
-#sidebar {
-    position: sticky;
-    top: 0;
-    z-index: var(--z-sticky);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 100vh;
-    min-width: 290px;
-    padding: 24px;
-    overflow-y: auto;
-    background: linear-gradient(180deg, #07142d 0%, #041225 100%);
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow: var(--shadow-soft);
-    font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
-
-#sidebar .sidebar-brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
-}
-
-#sidebar .brand-logo {
-    width: 46px;
-    height: 46px;
-    object-fit: contain;
-    flex-shrink: 0;
-}
-
-#sidebar .brand-text h1 {
-    margin: 0;
-    color: #ffffff;
-    font-size: 20px;
-    line-height: 1.40;
-    font-weight: 600;
-    margin-bottom: 4px;
-}
-
-#sidebar .brand-subtitle {
-    margin: 0;
-    color: #94a3b8;
-    font-size: 0.88rem;
-    line-height: 1.4;
-}
-
-#sidebar-navigation ul {
-    display: grid;
-    gap: 12px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-#sidebar-navigation a {
-    display: inline-flex;
-    align-items: center;
-    width: 100%;
-    min-height: 30px;
-    padding: 14px 18px;
-    color: #cbd5e1;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 14px;
-    font-size: 0.95rem;
-    font-weight: 500;
-    gap: 12px;
-    transition: background-color 180ms ease, color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
-}
-
-#sidebar-navigation a:hover,
-#sidebar-navigation a:focus-visible {
-    color: #ffffff;
-    background: rgba(37, 99, 235, 0.10);
-}
-
-#sidebar-navigation a.active,
-#sidebar-navigation a[aria-current="page"] {
-    color: #ffffff;
-    background: #2055d2;
-    opacity: 0.95;
-    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25);
-}
-
-.nav-icon {
-    width: 18px;
-    height: 18px;
-    display: inline-block;
-}
-
-.nav-label {
-    display: inline-block;
-}
-
-#sidebar-metadata {
-    display: grid;
-    gap: 14px;
-    margin-top: auto;
-    padding: 24px;
-    color: #94a3b8;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    box-shadow: var(--shadow-card);
-    font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    overflow: hidden;
-}
-
-.meta-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    min-width: 0;
-}
-
-.meta-label {
-    color: #94a3b8;
-    font-size: 0.82rem;
-    line-height: 1.4;
-    white-space: nowrap;
-}
-
-.meta-value {
-    color: #ffffff;
-    font-weight: 600;
-    font-size: 0.95rem;
-    line-height: 1.4;
-    text-align: right;
-    min-width: 0;
-    word-break: break-word;
-    overflow-wrap: anywhere;
-    display: inline-flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.5rem;
-}
-
-.status-dot {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    margin-right: 8px;
-    vertical-align: middle;
-}
-
-.status-dot.live {
-    background: #22c55e;
-}
-
-.meta-sep {
-    height: 1px;
-    background: rgba(255,255,255,0.04);
-    margin: 6px 0;
-    border-radius: 1px;
 }
 
 #dashboard-content {
@@ -437,37 +269,6 @@ select:focus-visible {
 
 #dashboard-header .filter-field.filter-action {
     align-self: flex-start;
-}
-
-.sidebar-brand {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: var(--space-4);
-    align-items: center;
-    padding: var(--space-5) var(--space-4);
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-lg);
-}
-
-.brand-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    box-shadow: 0 18px 30px rgba(37, 99, 235, 0.2);
-}
-
-.brand-text h2 {
-    color: var(--color-text);
-    font-size: clamp(1.8rem, 3vw, 2.7rem);
-    line-height: 1.05;
-}
-
-.brand-text p {
-    margin-top: var(--space-1);
-    color: var(--color-text-muted);
-    font-size: 1rem;
 }
 
 .kpi-card,
@@ -1126,21 +927,6 @@ select:focus-visible {
 }
 
 @media (max-width: 900px) {
-    #app-layout {
-        grid-template-columns: 1fr;
-    }
-
-    #sidebar {
-        position: static;
-        height: auto;
-        border-right: 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    #sidebar-navigation ul {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     #dashboard-content {
         padding: var(--space-5);
     }
@@ -1196,20 +982,17 @@ select:focus-visible {
         --card-gap: 16px;
     }
 
-    #sidebar,
     #dashboard-content {
         padding: var(--space-4);
     }
 
-    #sidebar-navigation ul,
     #dashboard-filters,
     #kpi-section,
     #charts-section {
         grid-template-columns: 1fr;
     }
 
-    #dashboard-header h1,
-    .brand-text h2 {
+    #dashboard-header h1 {
         font-size: 2rem;
     }
 

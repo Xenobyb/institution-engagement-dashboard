@@ -4,83 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../module-01-dashboard/style.css">
+    <link rel="stylesheet" href="../components/sidebar.css">
+    <script src="../components/sidebar.js"></script>
     <title>Timeline Planning - Institution Engagement Dashboard</title>
 </head>
 <body>
     <div id="app-layout">
-        <aside id="sidebar">
-            <div class="sidebar-brand">
-                <div class="brand-text">
-                    <h1>Key Performance<br>Indicator Dashboard</h1>
-
-                    <p class="brand-subtitle">Centre of Excellence (COE)</p>
-                    <p class="brand-subtitle">Graduate & Emerging Talent</p>
-                </div>
-            </div>
-
-            <nav id="sidebar-navigation" aria-label="Dashboard navigation">
-                <ul>
-                    <li>
-                        <a href="../module-01-dashboard/index.html" data-module="module-01" aria-label="Overview">
-                            <img src="../assets/icons/overview.svg" alt="" class="nav-icon">
-                            <span class="nav-label">Overview</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="../module-02-kpi-insights/index.html" data-module="module-02" aria-label="Insights">
-                            <img src="../assets/icons/insights.svg" alt="" class="nav-icon">
-                            <span class="nav-label">KPI Insights</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="index.html" data-module="module-04" aria-label="Timeline Planning">
-                            <img src="../assets/icons/directory.svg" alt="" class="nav-icon">
-                            <span class="nav-label">Timeline Planning</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="../module-03-governance-framework/index.html" data-module="module-03" aria-label="Governance Framework">
-                            <img src="../assets/icons/governance.svg" alt="" class="nav-icon">
-                            <span class="nav-label">Governance Framework</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="../module-05-about/index.html" data-module="module-05" aria-label="About">
-                            <img src="../assets/icons/about.svg" alt="" class="nav-icon">
-                            <span class="nav-label">About</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-
-            <section id="sidebar-metadata" aria-label="Dashboard metadata">
-                <div class="meta-row">
-                    <div class="meta-label">Last Updated</div>
-                    <div class="meta-value"><span id="last-updated">--</span></div>
-                </div>
-
-                <div class="meta-row">
-                    <div class="meta-label">Status</div>
-                    <div class="meta-value"><span class="status-dot live" aria-hidden="true"></span> Live</div>
-                </div>
-
-                <div class="meta-sep" aria-hidden="true"></div>
-
-                <div class="meta-row">
-                    <div class="meta-label">Data Source</div>
-                    <div class="meta-value"><span id="data-source">--</span></div>
-                </div>
-
-                <div class="meta-row">
-                    <div class="meta-label">Version</div>
-                    <div class="meta-value"><span id="dashboard-version">1.0</span></div>
-                </div>
-            </section>
-        </aside>
+        <!-- Shared sidebar component mount -->
+        <aside id="sidebar" aria-label="Dashboard sidebar"></aside>
 
         <main id="dashboard-content">
             <header id="dashboard-header">
@@ -104,6 +35,5 @@
         </footer>
     </div>
     <script src="config.js"></script>
-    <script src="script.js"></script>
 </body>
 </html>
