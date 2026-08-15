@@ -1,0 +1,98 @@
+/* ============================================================
+   Breadcrumb Navigation
+   Generic breadcrumb trail for page hierarchy navigation
+   ============================================================ */
+
+.breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.92rem;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.breadcrumb-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.breadcrumb-item a {
+    color: var(--color-accent);
+    text-decoration: none;
+    transition: color 180ms ease, text-decoration 180ms ease;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--color-accent-strong);
+    text-decoration: underline;
+}
+
+.breadcrumb-item a:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+    border-radius: var(--radius-sm);
+}
+
+/* Current/active breadcrumb item */
+.breadcrumb-item.active {
+    color: var(--color-text);
+    font-weight: 600;
+}
+
+.breadcrumb-item.active a {
+    pointer-events: none;
+    cursor: default;
+    color: inherit;
+}
+
+/* Breadcrumb separator */
+.breadcrumb-separator {
+    color: var(--color-text-muted);
+    opacity: 0.5;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* Container for breadcrumb navigation */
+.breadcrumb-container {
+    display: grid;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.breadcrumb-container--hidden {
+    display: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .breadcrumb {
+        font-size: 0.85rem;
+        gap: var(--space-2);
+    }
+    
+    .breadcrumb-container {
+        gap: var(--space-3);
+        margin-bottom: var(--space-4);
+        padding-bottom: var(--space-3);
+    }
+}
+
+@media (max-width: 640px) {
+    .breadcrumb {
+        font-size: 0.82rem;
+    }
+    
+    .breadcrumb-item {
+        gap: var(--space-1);
+    }
+}

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../module-01-dashboard/style.css">
+    <link rel="stylesheet" href="../components/sidebar.css">
+    <link rel="stylesheet" href="layout/layout.css">
+    <link rel="stylesheet" href="components/baseCard.css">
+    <script src="../components/sidebar.js"></script>
+    <title>AM's Detail - COE KPI Dashboard</title>
+</head>
+<body>
+    <div id="app-layout">
+        <!-- Shared sidebar component mount -->
+        <aside id="sidebar" aria-label="Dashboard sidebar"></aside>
+
+        <main id="dashboard-content">
+            <nav class="breadcrumb-container" aria-label="Breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="index.html">KPI Insights</a></li>
+                    <li class="breadcrumb-separator" aria-hidden="true">/</li>
+                    <li class="breadcrumb-item"><a href="kpi-detail.html">KPI Detail</a></li>
+                    <li class="breadcrumb-separator" aria-hidden="true">/</li>
+                    <li class="breadcrumb-item active" aria-current="page">AM's Detail</li>
+                </ol>
+            </nav>
+
+            <header id="dashboard-header">
+                <div class="header-content">
+                    <div class="header-title-group">
+                        <div class="entity-header">
+                            <div class="entity-avatar" aria-hidden="true"></div>
+                            <div>
+                                <h1 data-placeholder="true">AM Name Placeholder</h1>
+                                <p data-placeholder="true">Account Manager description placeholder text.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="header-filters" aria-label="AM's Detail controls">
+                        <form id="dashboard-filters">
+                            <div class="filter-field">
+                                <label for="am-selector">Account Manager</label>
+                                <select id="am-selector" name="am" aria-label="Select account manager">
+                                    <option value="">Select Account Manager</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-field filter-action">
+                                <label for="reset-filters">Reset</label>
+                                <button id="reset-filters" type="reset" aria-label="Reset AM's Detail selection"></button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </header>
+
+            <section id="kpi-summary-section" class="section">
+                <div class="section-header">
+                    <h2 class="section-title">KPI Summary</h2>
+                </div>
+                <div class="section-content">
+                    <div class="grid grid--columns-3">
+                        <article class="base-card base-card--metric">
+                            <div class="base-card__content">
+                                <h3 class="base-card__label">AM Target</h3>
+                                <span class="base-card__value" data-placeholder="true">--</span>
+                                <p class="base-card__subtitle" data-placeholder="true">--</p>
+                            </div>
+                        </article>
+
+                        <article class="base-card base-card--metric">
+                            <div class="base-card__content">
+                                <h3 class="base-card__label">Achievement</h3>
+                                <span class="base-card__value" data-placeholder="true">--</span>
+                                <p class="base-card__subtitle" data-placeholder="true">--</p>
+                            </div>
+                        </article>
+
+                        <article class="base-card base-card--metric">
+                            <div class="base-card__content">
+                                <h3 class="base-card__label">Achievement %</h3>
+                                <span class="base-card__value" data-placeholder="true">--</span>
+                                <p class="base-card__subtitle" data-placeholder="true">--</p>
+                            </div>
+                        </article>
+
+                        <article class="base-card base-card--metric">
+                            <div class="base-card__content">
+                                <h3 class="base-card__label">Variance</h3>
+                                <span class="base-card__value" data-placeholder="true">--</span>
+                                <p class="base-card__subtitle" data-placeholder="true">--</p>
+                            </div>
+                        </article>
+
+                        <article class="base-card base-card--metric">
+                            <div class="base-card__content">
+                                <h3 class="base-card__label">Target Gap %</h3>
+                                <span class="base-card__value" data-placeholder="true">--</span>
+                                <p class="base-card__subtitle" data-placeholder="true">--</p>
+                            </div>
+                        </article>
+
+                        <article class="base-card base-card--metric">
+                            <div class="base-card__content">
+                                <h3 class="base-card__label">Last Updated</h3>
+                                <span class="base-card__value" data-placeholder="true">--</span>
+                                <p class="base-card__subtitle" data-placeholder="true">--</p>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <div class="grid grid--columns-3">
+                <section id="institution-contribution-section" class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">Institution Contribution</h2>
+                    </div>
+                    <div class="section-content">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Institution</th>
+                                        <th scope="col">Category</th>
+                                        <th scope="col">Achievement</th>
+                                        <th scope="col">Achievement %</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><a href="institutions-detail.html">Universiti Malaya (UM)</a></td>
+                                        <td>Category Placeholder</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td data-placeholder="true">--</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="institutions-detail.html">Institution Placeholder</a></td>
+                                        <td>Category Placeholder</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td data-placeholder="true">--</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Contribution by Category</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-contribution-category"></canvas>
+                        <div class="chart-placeholder-copy">
+                            <span>Donut Chart Placeholder</span>
+                            <span>Future Chart.js Rendering Area</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Contribution by State</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-contribution-state"></canvas>
+                        <div class="chart-placeholder-copy">
+                            <span>Donut Chart Placeholder</span>
+                            <span>Future Chart.js Rendering Area</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <section class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Engagement Trend</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chart-engagement-trend"></canvas>
+                    <div class="chart-placeholder-copy">
+                        <span>Line Chart Placeholder</span>
+                        <span>Future Chart.js Rendering Area</span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="grid grid--columns-3">
+                <section id="top-institutions-section" class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">Top Institutions by Achievement</h2>
+                    </div>
+                    <div class="section-content">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Rank</th>
+                                        <th scope="col">Institution</th>
+                                        <th scope="col">Achievement</th>
+                                        <th scope="col">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td data-placeholder="true">--</td>
+                                        <td><a href="institutions-detail.html">Universiti Malaya (UM)</a></td>
+                                        <td data-placeholder="true">--</td>
+                                        <td><span class="status-badge status-badge--on-track">On Track</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td data-placeholder="true">--</td>
+                                        <td><a href="institutions-detail.html">Institution Placeholder</a></td>
+                                        <td data-placeholder="true">--</td>
+                                        <td><span class="status-badge status-badge--behind">Behind</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Achievement by Latest Engagement Year</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-achievement-latest-year"></canvas>
+                        <div class="chart-placeholder-copy">
+                            <span>Bar Chart Placeholder</span>
+                            <span>Future Chart.js Rendering Area</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Institutions by Latest Engagement Year (Map)</h3>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-placeholder-copy">
+                            <span>Malaysia Map Placeholder</span>
+                            <span>Future Map Rendering Area</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <footer id="dashboard-footer">
+            <p class="footer-title">COE KPI Dashboard</p>
+            <p class="footer-version">Version <span id="dashboard-version" class="footer-version-value">1.5</span></p>
+        </footer>
+    </div>
+
+    <script src="config.js"></script>
+</body>
+</html>

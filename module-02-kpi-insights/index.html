@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../module-01-dashboard/style.css">
     <link rel="stylesheet" href="../components/sidebar.css">
+    <link rel="stylesheet" href="layout/layout.css">
+    <link rel="stylesheet" href="components/baseCard.css">
     <script src="../components/sidebar.js"></script>
     <title>KPI Insights - COE KPI Dashboard</title>
 </head>
@@ -14,19 +16,239 @@
         <aside id="sidebar" aria-label="Dashboard sidebar"></aside>
 
         <main id="dashboard-content">
+            <nav class="breadcrumb-container" aria-label="Breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item active" aria-current="page">KPI Insights</li>
+                </ol>
+            </nav>
+
             <header id="dashboard-header">
                 <div class="header-content">
                     <div class="header-title-group">
                         <h1>KPI Insights</h1>
-                        <p>Detailed performance metrics and insights</p>
+                        <p>Analyze KPI performance across all dimensions.</p>
+                    </div>
+
+                    <div class="header-filters" aria-label="KPI Insights filters">
+                        <form id="dashboard-filters">
+                            <div class="filter-field">
+                                <label for="year-filter">Year</label>
+                                <select id="year-filter" name="year" aria-label="Filter by year">
+                                    <option value="">All Years</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-field">
+                                <label for="category-filter">Category</label>
+                                <select id="category-filter" name="category" aria-label="Filter by category">
+                                    <option value="">All Categories</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-field">
+                                <label for="region-filter">Region</label>
+                                <select id="region-filter" name="region" aria-label="Filter by region">
+                                    <option value="">All Regions</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-field">
+                                <label for="state-filter">State</label>
+                                <select id="state-filter" name="state" aria-label="Filter by state">
+                                    <option value="">All States</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-field filter-action">
+                                <label for="reset-filters">Reset</label>
+                                <button id="reset-filters" type="reset" aria-label="Reset KPI Insights filters"></button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </header>
 
-            <section id="content-placeholder" style="padding: var(--space-8); text-align: center; color: var(--color-text-muted);">
-                <h2 style="color: var(--color-text); margin-bottom: var(--space-4);">Coming Soon</h2>
-                <p>This module is under development. Navigate to other modules using the sidebar.</p>
+            <section id="kpi-summary-section" class="section">
+                <div class="section-header">
+                    <h2 class="section-title">KPI Summary</h2>
+                </div>
+                <div class="section-content">
+                    <div class="grid grid--columns-5">
+                        <article class="base-card base-card--metric">
+                            <div class="base-card__icon"><img src="../assets/icons/kpi-total-institutions.svg" alt="" aria-hidden="true"></div>
+                            <div class="base-card__content">
+                                <h3 class="base-card__label">Total KPI</h3>
+                                <span class="base-card__value" data-placeholder="true">--</span>
+                                <p class="base-card__subtitle" data-placeholder="true">--</p>
+                            </div>
+                        </article>
+
+                        <article class="base-card base-card--metric">
+                            <div class="base-card__icon"><img src="../assets/icons/kpi-total-engaged.svg" alt="" aria-hidden="true"></div>
+                            <div class="base-card__content">
+                                <h3 class="base-card__label">On Track</h3>
+                                <span class="base-card__value" data-placeholder="true">--</span>
+                                <p class="base-card__subtitle" data-placeholder="true">--</p>
+                            </div>
+                        </article>
+
+                        <article class="base-card base-card--metric">
+                            <div class="base-card__icon"><img src="../assets/icons/kpi-recently-engaged.svg" alt="" aria-hidden="true"></div>
+                            <div class="base-card__content">
+                                <h3 class="base-card__label">At Risk</h3>
+                                <span class="base-card__value" data-placeholder="true">--</span>
+                                <p class="base-card__subtitle" data-placeholder="true">--</p>
+                            </div>
+                        </article>
+
+                        <article class="base-card base-card--metric">
+                            <div class="base-card__icon"><img src="../assets/icons/kpi-non-engaged.svg" alt="" aria-hidden="true"></div>
+                            <div class="base-card__content">
+                                <h3 class="base-card__label">Behind</h3>
+                                <span class="base-card__value" data-placeholder="true">--</span>
+                                <p class="base-card__subtitle" data-placeholder="true">--</p>
+                            </div>
+                        </article>
+
+                        <article class="base-card base-card--metric">
+                            <div class="base-card__icon"><img src="../assets/icons/kpi-engagement-rate.svg" alt="" aria-hidden="true"></div>
+                            <div class="base-card__content">
+                                <h3 class="base-card__label">Overall Achievement</h3>
+                                <span class="base-card__value" data-placeholder="true">--</span>
+                                <p class="base-card__subtitle" data-placeholder="true">--</p>
+                            </div>
+                        </article>
+                    </div>
+                </div>
             </section>
+
+            <div class="grid grid--columns-2">
+                <section id="kpi-performance-section" class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">KPI Performance</h2>
+                        <a class="section-header-link" href="kpi-detail.html">View all KPI &rarr;</a>
+                    </div>
+                    <div class="section-content">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">KPI</th>
+                                        <th scope="col">Programme</th>
+                                        <th scope="col">Target</th>
+                                        <th scope="col">Achievement</th>
+                                        <th scope="col">Achievement %</th>
+                                        <th scope="col">Status</th>
+                                        <th scope="col">Trend</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><a href="kpi-detail.html">KPI Placeholder 1</a></td>
+                                        <td>Programme Placeholder</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td><span class="status-badge status-badge--on-track">On Track</span></td>
+                                        <td><span class="trend-indicator trend-indicator--up" aria-label="Trending up">&#9650;</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="kpi-detail.html">KPI Placeholder 2</a></td>
+                                        <td>Programme Placeholder</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td><span class="status-badge status-badge--at-risk">At Risk</span></td>
+                                        <td><span class="trend-indicator trend-indicator--flat" aria-label="Trending flat">&#9644;</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="kpi-detail.html">KPI Placeholder 3</a></td>
+                                        <td>Programme Placeholder</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td><span class="status-badge status-badge--behind">Behind</span></td>
+                                        <td><span class="trend-indicator trend-indicator--down" aria-label="Trending down">&#9660;</span></td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td>Overall</td>
+                                        <td>&mdash;</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td>&mdash;</td>
+                                        <td>&mdash;</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <div id="directory-pagination" aria-label="KPI performance pagination">
+                            <span id="directory-count">1&ndash;3 of 42</span>
+                            <div class="directory-pagination-controls">
+                                <button class="pagination-button" type="button" aria-label="Previous page" disabled>&lsaquo;</button>
+                                <button class="pagination-button" type="button" aria-label="Next page">&rsaquo;</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Achievement by Programme</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-achievement-programme"></canvas>
+                        <div class="chart-placeholder-copy">
+                            <span>Chart Placeholder</span>
+                            <span>Future Chart.js Rendering Area</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="grid grid--columns-3">
+                <section class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Monthly Achievement Trend</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-monthly-trend"></canvas>
+                        <div class="chart-placeholder-copy">
+                            <span>Chart Placeholder</span>
+                            <span>Future Chart.js Rendering Area</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">KPI Status Distribution</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-status-distribution"></canvas>
+                        <div class="chart-placeholder-copy">
+                            <span>Chart Placeholder</span>
+                            <span>Future Chart.js Rendering Area</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Top 5 KPI by Achievement %</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-top-kpi"></canvas>
+                        <div class="chart-placeholder-copy">
+                            <span>Chart Placeholder</span>
+                            <span>Future Chart.js Rendering Area</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
         </main>
 
         <footer id="dashboard-footer">
@@ -34,6 +256,7 @@
             <p class="footer-version">Version <span id="dashboard-version" class="footer-version-value">1.5</span></p>
         </footer>
     </div>
+
     <script src="config.js"></script>
 </body>
 </html>

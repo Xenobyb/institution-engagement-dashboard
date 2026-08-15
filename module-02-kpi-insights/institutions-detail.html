@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../module-01-dashboard/style.css">
+    <link rel="stylesheet" href="../components/sidebar.css">
+    <link rel="stylesheet" href="layout/layout.css">
+    <link rel="stylesheet" href="components/baseCard.css">
+    <script src="../components/sidebar.js"></script>
+    <title>Institutions Detail - COE KPI Dashboard</title>
+</head>
+<body>
+    <div id="app-layout">
+        <!-- Shared sidebar component mount -->
+        <aside id="sidebar" aria-label="Dashboard sidebar"></aside>
+
+        <main id="dashboard-content">
+            <nav class="breadcrumb-container" aria-label="Breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="index.html">KPI Insights</a></li>
+                    <li class="breadcrumb-separator" aria-hidden="true">/</li>
+                    <li class="breadcrumb-item"><a href="kpi-detail.html">KPI Detail</a></li>
+                    <li class="breadcrumb-separator" aria-hidden="true">/</li>
+                    <li class="breadcrumb-item active" aria-current="page">Institutions Detail</li>
+                </ol>
+            </nav>
+
+            <header id="dashboard-header">
+                <div class="header-content">
+                    <div class="header-title-group">
+                        <div class="entity-header">
+                            <div class="entity-avatar" aria-hidden="true"></div>
+                            <div>
+                                <h1 data-placeholder="true">Institution Name Placeholder</h1>
+                                <p data-placeholder="true">Institution description placeholder text.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="header-filters" aria-label="Institutions Detail controls">
+                        <div class="stat-pill-group" aria-label="Institution quick stats">
+                            <div class="stat-pill">
+                                <span class="stat-pill-label">Target</span>
+                                <span class="stat-pill-value" data-placeholder="true">--</span>
+                            </div>
+                            <div class="stat-pill">
+                                <span class="stat-pill-label">Achievement</span>
+                                <span class="stat-pill-value" data-placeholder="true">--</span>
+                            </div>
+                            <div class="stat-pill">
+                                <span class="stat-pill-label">Rate</span>
+                                <span class="stat-pill-value" data-placeholder="true">--</span>
+                            </div>
+                            <div class="stat-pill">
+                                <span class="stat-pill-label">Gap</span>
+                                <span class="stat-pill-value" data-placeholder="true">--</span>
+                            </div>
+                        </div>
+
+                        <form id="dashboard-filters">
+                            <div class="filter-field">
+                                <label for="institution-type-selector">Institution Type</label>
+                                <select id="institution-type-selector" name="institution-type" aria-label="Select institution type">
+                                    <option value="">Select Institution Type</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-field">
+                                <label for="institution-selector">Institution</label>
+                                <select id="institution-selector" name="institution" aria-label="Select institution">
+                                    <option value="">Select Institution</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-field filter-action">
+                                <label for="reset-filters">Reset</label>
+                                <button id="reset-filters" type="reset" aria-label="Reset Institutions Detail selections"></button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </header>
+
+            <section id="kpi-summary-section" class="section">
+                <div class="section-header">
+                    <h2 class="section-title">KPI Summary</h2>
+                </div>
+                <div class="section-content">
+                    <div class="grid grid--columns-3">
+                        <article class="base-card base-card--metric">
+                            <div class="base-card__content">
+                                <h3 class="base-card__label">Institution Target</h3>
+                                <span class="base-card__value" data-placeholder="true">--</span>
+                                <p class="base-card__subtitle" data-placeholder="true">--</p>
+                            </div>
+                        </article>
+
+                        <article class="base-card base-card--metric">
+                            <div class="base-card__content">
+                                <h3 class="base-card__label">Total Achievement</h3>
+                                <span class="base-card__value" data-placeholder="true">--</span>
+                                <p class="base-card__subtitle" data-placeholder="true">--</p>
+                            </div>
+                        </article>
+
+                        <article class="base-card base-card--metric">
+                            <div class="base-card__content">
+                                <h3 class="base-card__label">Achievement %</h3>
+                                <span class="base-card__value" data-placeholder="true">--</span>
+                                <p class="base-card__subtitle" data-placeholder="true">--</p>
+                            </div>
+                        </article>
+
+                        <article class="base-card base-card--metric">
+                            <div class="base-card__content">
+                                <h3 class="base-card__label">Variance</h3>
+                                <span class="base-card__value" data-placeholder="true">--</span>
+                                <p class="base-card__subtitle" data-placeholder="true">--</p>
+                            </div>
+                        </article>
+
+                        <article class="base-card base-card--metric">
+                            <div class="base-card__content">
+                                <h3 class="base-card__label">Target Gap %</h3>
+                                <span class="base-card__value" data-placeholder="true">--</span>
+                                <p class="base-card__subtitle" data-placeholder="true">--</p>
+                            </div>
+                        </article>
+
+                        <article class="base-card base-card--metric">
+                            <div class="base-card__content">
+                                <h3 class="base-card__label">Latest Engagement</h3>
+                                <span class="base-card__value" data-placeholder="true">--</span>
+                                <p class="base-card__subtitle" data-placeholder="true">--</p>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <div class="grid grid--columns-3">
+                <section class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">Engagement Summary</h2>
+                    </div>
+                    <div class="section-content">
+                        <p class="text-muted" data-placeholder="true">Engagement summary placeholder content.</p>
+                    </div>
+                </section>
+
+                <section class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Achievement Trend</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-achievement-trend"></canvas>
+                        <div class="chart-placeholder-copy">
+                            <span>Line Chart Placeholder</span>
+                            <span>Future Chart.js Rendering Area</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Achievement by Programme</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-achievement-programme"></canvas>
+                        <div class="chart-placeholder-copy">
+                            <span>Bar Chart Placeholder</span>
+                            <span>Future Chart.js Rendering Area</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <section id="transaction-history-section" class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Transaction History</h2>
+                </div>
+                <div class="section-content">
+                    <div class="table-toolbar" aria-label="Transaction history toolbar">
+                        <div class="directory-search">
+                            <label for="transaction-search">Search Transactions</label>
+                            <div class="directory-search-field">
+                                <img src="../assets/icons/search.svg" alt="" class="directory-search-icon">
+                                <input type="search" id="transaction-search" name="transaction-search" aria-label="Search transactions" placeholder="Search transactions">
+                            </div>
+                        </div>
+                        <button type="button" class="filter-button" aria-label="Filter transactions">Filter</button>
+                        <button type="button" class="filter-button" aria-label="Export transactions">Export</button>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Programme</th>
+                                    <th scope="col">Activity / Description</th>
+                                    <th scope="col">Engagement Type</th>
+                                    <th scope="col">Achievement</th>
+                                    <th scope="col">Remarks</th>
+                                    <th scope="col">Added By</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td data-placeholder="true">--</td>
+                                    <td>Programme Placeholder</td>
+                                    <td>Activity Placeholder</td>
+                                    <td>Engagement Type Placeholder</td>
+                                    <td data-placeholder="true">--</td>
+                                    <td>Remarks Placeholder</td>
+                                    <td>Added By Placeholder</td>
+                                    <td><span class="status-badge status-badge--on-track">On Track</span></td>
+                                    <td><button type="button" class="table-action-button" aria-label="View transaction details">View</button></td>
+                                </tr>
+                                <tr>
+                                    <td data-placeholder="true">--</td>
+                                    <td>Programme Placeholder</td>
+                                    <td>Activity Placeholder</td>
+                                    <td>Engagement Type Placeholder</td>
+                                    <td data-placeholder="true">--</td>
+                                    <td>Remarks Placeholder</td>
+                                    <td>Added By Placeholder</td>
+                                    <td><span class="status-badge status-badge--at-risk">At Risk</span></td>
+                                    <td><button type="button" class="table-action-button" aria-label="View transaction details">View</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="directory-pagination" aria-label="Transaction history pagination">
+                        <span id="directory-count">1&ndash;2 of 58</span>
+                        <div class="directory-pagination-controls">
+                            <button class="pagination-button" type="button" aria-label="Previous page" disabled>&lsaquo;</button>
+                            <button class="pagination-button" type="button" aria-label="Next page">&rsaquo;</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer id="dashboard-footer">
+            <p class="footer-title">COE KPI Dashboard</p>
+            <p class="footer-version">Version <span id="dashboard-version" class="footer-version-value">1.5</span></p>
+        </footer>
+    </div>
+
+    <script src="config.js"></script>
+</body>
+</html>

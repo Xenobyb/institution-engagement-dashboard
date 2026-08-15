@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../module-01-dashboard/style.css">
+    <link rel="stylesheet" href="../components/sidebar.css">
+    <link rel="stylesheet" href="layout/layout.css">
+    <link rel="stylesheet" href="components/baseCard.css">
+    <script src="../components/sidebar.js"></script>
+    <title>KPI Detail - COE KPI Dashboard</title>
+</head>
+<body>
+    <div id="app-layout">
+        <!-- Shared sidebar component mount -->
+        <aside id="sidebar" aria-label="Dashboard sidebar"></aside>
+
+        <main id="dashboard-content">
+            <nav class="breadcrumb-container" aria-label="Breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="index.html">KPI Insights</a></li>
+                    <li class="breadcrumb-separator" aria-hidden="true">/</li>
+                    <li class="breadcrumb-item active" aria-current="page">KPI Detail</li>
+                </ol>
+            </nav>
+
+            <header id="dashboard-header">
+                <div class="header-content">
+                    <div class="header-title-group">
+                        <h1 data-placeholder="true">KPI Title Placeholder</h1>
+                        <p data-placeholder="true">KPI description placeholder text.</p>
+                    </div>
+
+                    <div class="header-filters" aria-label="KPI Detail controls">
+                        <div class="stat-pill-group" aria-label="KPI quick stats">
+                            <div class="stat-pill">
+                                <span class="stat-pill-label">Target</span>
+                                <span class="stat-pill-value" data-placeholder="true">--</span>
+                            </div>
+                            <div class="stat-pill">
+                                <span class="stat-pill-label">Achievement</span>
+                                <span class="stat-pill-value" data-placeholder="true">--</span>
+                            </div>
+                            <div class="stat-pill">
+                                <span class="stat-pill-label">Rate</span>
+                                <span class="stat-pill-value" data-placeholder="true">--</span>
+                            </div>
+                            <div class="stat-pill">
+                                <span class="stat-pill-label">Gap</span>
+                                <span class="stat-pill-value" data-placeholder="true">--</span>
+                            </div>
+                        </div>
+
+                        <form id="dashboard-filters">
+                            <div class="filter-field">
+                                <label for="kpi-selector">KPI</label>
+                                <select id="kpi-selector" name="kpi" aria-label="Select KPI">
+                                    <option value="">Select KPI</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-field filter-action">
+                                <label for="reset-filters">Reset</label>
+                                <button id="reset-filters" type="reset" aria-label="Reset KPI Detail selection"></button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </header>
+
+            <div class="grid grid--columns-3">
+                <section class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Achievement Progress</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-achievement-progress"></canvas>
+                        <div class="chart-placeholder-copy">
+                            <span>Gauge Placeholder</span>
+                            <span>Future Chart.js Rendering Area</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Achievement Trend (Overall)</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-achievement-trend-overall"></canvas>
+                        <div class="chart-placeholder-copy">
+                            <span>Line Chart Placeholder</span>
+                            <span>Future Chart.js Rendering Area</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Achievement by Programme</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-achievement-programme"></canvas>
+                        <div class="chart-placeholder-copy">
+                            <span>Bar Chart Placeholder</span>
+                            <span>Future Chart.js Rendering Area</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="grid grid--columns-3">
+                <section id="am-contribution-section" class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">AM Contribution to Institution Engagement</h2>
+                    </div>
+                    <div class="section-content">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Rank</th>
+                                        <th scope="col">AM</th>
+                                        <th scope="col">Region</th>
+                                        <th scope="col">Target</th>
+                                        <th scope="col">Achievement</th>
+                                        <th scope="col">Achievement %</th>
+                                        <th scope="col">Status</th>
+                                        <th scope="col">Contribution %</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td data-placeholder="true">--</td>
+                                        <td><a href="am-detail.html">Aiman</a></td>
+                                        <td>Region Placeholder</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td><span class="status-badge status-badge--on-track">On Track</span></td>
+                                        <td data-placeholder="true">--</td>
+                                    </tr>
+                                    <tr>
+                                        <td data-placeholder="true">--</td>
+                                        <td><a href="am-detail.html">AM Name Placeholder</a></td>
+                                        <td>Region Placeholder</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td data-placeholder="true">--</td>
+                                        <td><span class="status-badge status-badge--at-risk">At Risk</span></td>
+                                        <td data-placeholder="true">--</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p class="section-footer-link"><a href="am-detail.html">View all AM's &rarr;</a></p>
+                    </div>
+                </section>
+
+                <section class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Achievement by Region</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-achievement-region"></canvas>
+                        <div class="chart-placeholder-copy">
+                            <span>Bar Chart Placeholder</span>
+                            <span>Future Chart.js Rendering Area</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="top-institutions-section" class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">Top 5 Institutions by Achievement</h2>
+                    </div>
+                    <div class="section-content">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Rank</th>
+                                        <th scope="col">Institution</th>
+                                        <th scope="col">Region</th>
+                                        <th scope="col">Achievement</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td data-placeholder="true">--</td>
+                                        <td><a href="institutions-detail.html">Universiti Malaya (UM)</a></td>
+                                        <td>Region Placeholder</td>
+                                        <td data-placeholder="true">--</td>
+                                    </tr>
+                                    <tr>
+                                        <td data-placeholder="true">--</td>
+                                        <td><a href="institutions-detail.html">Institution Placeholder</a></td>
+                                        <td>Region Placeholder</td>
+                                        <td data-placeholder="true">--</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p class="section-footer-link"><a href="institutions-detail.html">View all institutions &rarr;</a></p>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <footer id="dashboard-footer">
+            <p class="footer-title">COE KPI Dashboard</p>
+            <p class="footer-version">Version <span id="dashboard-version" class="footer-version-value">1.5</span></p>
+        </footer>
+    </div>
+
+    <script src="config.js"></script>
+</body>
+</html>

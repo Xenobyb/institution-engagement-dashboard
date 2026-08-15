@@ -1,0 +1,97 @@
+/* ============================================================
+   Grid Layout Primitives
+   Generic, content-agnostic grid system for responsive layouts
+   ============================================================ */
+
+.grid {
+    display: grid;
+    gap: var(--card-gap);
+    width: 100%;
+}
+
+/* Column count variations */
+.grid--columns-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.grid--columns-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.grid--columns-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.grid--columns-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid--columns-1 {
+    grid-template-columns: 1fr;
+}
+
+/* Auto-fit with minimum width (flexible columns) */
+.grid--auto {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+/* Responsive stacking */
+@media (max-width: 1200px) {
+    .grid--columns-5,
+    .grid--columns-4 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .grid--columns-5,
+    .grid--columns-4,
+    .grid--columns-3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    
+    .grid--auto {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .grid--auto {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .grid--columns-5,
+    .grid--columns-4,
+    .grid--columns-3,
+    .grid--columns-2 {
+        grid-template-columns: 1fr;
+    }
+    
+    .grid--auto {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Grid item spacing utilities */
+.grid-item {
+    min-width: 0; /* Prevent content overflow in grid items */
+}
+
+/* Gap modifiers */
+.grid--gap-0 {
+    gap: 0;
+}
+
+.grid--gap-sm {
+    gap: var(--space-3);
+}
+
+.grid--gap-md {
+    gap: var(--space-5);
+}
+
+.grid--gap-lg {
+    gap: var(--space-8);
+}
